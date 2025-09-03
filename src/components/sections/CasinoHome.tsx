@@ -166,7 +166,7 @@ const CasinoHome: React.FC = () => {
                 {/* Prize highlight */}
                 <div className="absolute top-1 left-1/2 transform -translate-x-1/2">
                   <motion.div
-                    className="bg-gradient-to-r from-yellow-400 to-orange-400 text-black px-3 py-1 rounded-full font-bold text-xs shadow-lg"
+                    className="bg-gradient-to-r from-yellow-400 to-orange-400 text-black px-2 py-0.5 md:px-3 md:py-1 rounded-full font-bold text-xs shadow-lg"
                     animate={{ scale: [1, 1.05, 1] }}
                     transition={{ duration: 2, repeat: Infinity }}
                   >
