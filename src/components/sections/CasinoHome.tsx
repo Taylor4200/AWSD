@@ -54,7 +54,7 @@ const CasinoHome: React.FC = () => {
               transition={{ delay: 0.2 }}
               className="max-w-4xl mx-auto"
             >
-              <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#1a2c38] via-[#2d3748] to-[#1a2c38] p-8 border border-[#00d4ff]/30 shadow-2xl shadow-[#00d4ff]/10">
+              <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#1a2c38] via-[#2d3748] to-[#1a2c38] p-4 md:p-8 border border-[#00d4ff]/30 shadow-2xl shadow-[#00d4ff]/10">
                 {/* Animated background elements */}
                 <div className="absolute inset-0">
                   <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-[#00d4ff]/5 via-transparent to-[#00d4ff]/5" />
@@ -63,7 +63,45 @@ const CasinoHome: React.FC = () => {
                 </div>
 
                 <div className="relative z-10">
-                  <div className="flex items-center justify-between">
+                  {/* Mobile Layout */}
+                  <div className="md:hidden">
+                    <div className="text-center mb-6">
+                      <div className="flex items-center justify-center mb-3">
+                        <div className="w-8 h-8 bg-[#00d4ff] rounded-full flex items-center justify-center mr-3">
+                          <span className="text-black font-bold text-sm">🎰</span>
+                        </div>
+                        <h2 className="text-2xl font-bold text-white">
+                          $100K Weekly Raffle
+                        </h2>
+                      </div>
+                      <p className="text-gray-300 text-base mb-4">
+                        Earn tickets with every wager and compete for massive prizes!
+                      </p>
+                      
+                      {/* Mobile Stats */}
+                      <div className="grid grid-cols-2 gap-4 mb-6">
+                        <div className="bg-black/30 backdrop-blur-sm rounded-xl p-4 border border-[#00d4ff]/20">
+                          <div className="text-[#00d4ff] text-xs font-semibold mb-1">⏰ Time Left</div>
+                          <div className="text-xl font-bold text-white">4d 21h</div>
+                        </div>
+                        <div className="bg-black/30 backdrop-blur-sm rounded-xl p-4 border border-[#00d4ff]/20">
+                          <div className="text-[#00d4ff] text-xs font-semibold mb-1">🎫 Your Tickets</div>
+                          <div className="text-xl font-bold text-white">0</div>
+                        </div>
+                      </div>
+                      
+                      <Button 
+                        variant="default" 
+                        className="w-full bg-[#00d4ff] hover:bg-[#00d4ff]/90 text-black font-bold py-3 text-lg shadow-lg shadow-[#00d4ff]/25"
+                        onClick={() => window.location.href = '/raffle/weeklyraffle0901'}
+                      >
+                        🎫 Enter Raffle
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Desktop Layout */}
+                  <div className="hidden md:flex items-center justify-between">
                     <div>
                       <div className="flex items-center mb-3">
                         <div className="w-8 h-8 bg-[#00d4ff] rounded-full flex items-center justify-center mr-3">
