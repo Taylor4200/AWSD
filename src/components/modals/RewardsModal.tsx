@@ -271,14 +271,14 @@ const RewardsModal: React.FC<RewardsModalProps> = ({ isOpen, onClose }) => {
               
               <Card variant="glass" className="border-[#2d3748] p-3 sm:p-4 text-center">
                 <div className="text-lg sm:text-xl font-bold text-blue-400 mb-1">
-                  {formatCurrency(currentRakeback.weekly)}
+                  ???
                 </div>
                 <div className="text-xs sm:text-sm text-gray-400">Weekly</div>
               </Card>
               
               <Card variant="glass" className="border-[#2d3748] p-3 sm:p-4 text-center">
                 <div className="text-lg sm:text-xl font-bold text-purple-400 mb-1">
-                  {formatCurrency(currentRakeback.monthly)}
+                  ???
                 </div>
                 <div className="text-xs sm:text-sm text-gray-400">Monthly</div>
               </Card>
@@ -395,7 +395,7 @@ const RewardsModal: React.FC<RewardsModalProps> = ({ isOpen, onClose }) => {
                 </CardHeader>
                 <CardContent className="p-4">
                   <div className="text-2xl sm:text-3xl font-bold text-white mb-2">
-                    {formatCurrency(currentRakeback.weekly)}
+                    ???
                   </div>
                   <p className="text-gray-400 text-sm mb-4">
                     Available every Sunday at 00:00 UTC
@@ -420,7 +420,7 @@ const RewardsModal: React.FC<RewardsModalProps> = ({ isOpen, onClose }) => {
                 </CardHeader>
                 <CardContent className="p-4">
                   <div className="text-2xl sm:text-3xl font-bold text-white mb-2">
-                    {formatCurrency(currentRakeback.monthly)}
+                    ???
                   </div>
                   <p className="text-gray-400 text-sm mb-4">
                     Available on the 1st of each month
