@@ -1,0 +1,170 @@
+'use client'
+
+import React from 'react'
+import { motion } from 'framer-motion'
+import { usePathname } from 'next/navigation'
+import Link from 'next/link'
+import { 
+  Home,
+  Dice1,
+  Coins,
+  TrendingUp,
+  Star,
+  Gift,
+  Trophy,
+  Users,
+  Settings,
+  HelpCircle,
+  Gamepad2,
+  Zap,
+  Target,
+  Crown
+} from 'lucide-react'
+import { cn } from '@/lib/utils'
+
+interface SidebarProps {
+  collapsed?: boolean
+  onCollapse?: (collapsed: boolean) => void
+}
+
+const Sidebar: React.FC<SidebarProps> = ({ collapsed = false, onCollapse }) => {
+  const pathname = usePathname()
+  
+  const navItems = [
+    { icon: Home, label: 'Home', href: '/' },
+    { icon: Dice1, label: 'Casino', href: '/casino', count: 35419 },
+    { icon: TrendingUp, label: 'Sports', href: '/sports', count: 7783 },
+    { icon: Gamepad2, label: 'Originals', href: '/originals' },
+    { icon: Star, label: 'Favorites', href: '/favorites' },
+    { icon: Gift, label: 'Promotions', href: '/promotions', badge: 'NEW' },
+    { icon: Trophy, label: 'VIP Club', href: '/vip' },
+    { icon: Users, label: 'Refer & Earn', href: '/referrals' },
+    { icon: Target, label: 'Challenges', href: '/challenges' },
+    { icon: Crown, label: 'Rewards', href: '/rewards' },
+  ]
+
+  const bottomItems = [
+    { icon: HelpCircle, label: 'Support', href: '/support' },
+    { icon: Settings, label: 'Settings', href: '/settings' },
+  ]
+
+  return (
+    <motion.div
+      initial={false}
+      animate={{ width: collapsed ? 64 : 240 }}
+      transition={{ duration: 0.3, ease: 'easeInOut' }}
+      className="fixed left-0 top-0 h-full bg-[#1a2c38] border-r border-[#2d3748] z-30 flex flex-col"
+    >
+      {/* Logo */}
+      <div className="p-4 border-b border-[#2d3748]">
+        <Link href="/" className="block">
+          {collapsed ? (
+            <div className="w-8 h-8 flex items-center justify-center">
+              <img 
+                src="/Logo11.png" 
+                alt="EDGE Originals" 
+                className="w-8 h-8 object-contain"
+              />
+            </div>
+          ) : (
+            <div className="flex items-center space-x-2">
+              <img 
+                src="/Logo11.png" 
+                alt="EDGE Originals" 
+                className="w-8 h-8 object-contain"
+              />
+              <span className="text-xl font-bold text-white">EDGE</span>
+            </div>
+          )}
+        </Link>
+      </div>
+
+      {/* Navigation */}
+      <div className="flex-1 py-4 overflow-y-auto">
+        <nav className="space-y-1">
+                    {navItems.map((item) => {
+            const isActive = pathname === item.href
+            return (
+              <motion.a
+                key={item.label}
+                href={item.href}
+                whileHover={{ x: collapsed ? 0 : 4 }}
+                className={cn(
+                  'flex items-center px-4 py-3 text-sm font-medium transition-colors duration-200 relative group',
+                  isActive 
+                    ? 'text-[#00d4ff] bg-[#00d4ff]/10 border-r-2 border-[#00d4ff]' 
+                    : 'text-gray-300 hover:text-white hover:bg-white/5'
+                )}
+              >
+                <item.icon className="h-5 w-5 flex-shrink-0" />
+                
+                {!collapsed && (
+                  <>
+                    <span className="ml-3 truncate">{item.label}</span>
+                    
+                    {item.count && (
+                      <span className="ml-auto text-xs text-green-400 font-medium">
+                        {item.count.toLocaleString()}
+                      </span>
+                    )}
+                    
+                    {item.badge && (
+                      <span className="ml-auto text-xs bg-[#00d4ff] text-black px-2 py-1 rounded-full font-bold">
+                        {item.badge}
+                      </span>
+                    )}
+                  </>
+                )}
+
+                {/* Tooltip for collapsed state */}
+                {collapsed && (
+                  <div className="absolute left-full ml-2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                    {item.label}
+                    {item.count && ` (${item.count.toLocaleString()})`}
+                  </div>
+                )}
+              </motion.a>
+            )
+          })}
+        </nav>
+      </div>
+
+      {/* Bottom Items */}
+      <div className="border-t border-[#2d3748] py-4">
+        <nav className="space-y-1">
+          {bottomItems.map((item) => {
+            const isActive = pathname === item.href
+            return (
+              <motion.a
+                key={item.label}
+                href={item.href}
+                whileHover={{ x: collapsed ? 0 : 4 }}
+                className={cn(
+                  'flex items-center px-4 py-3 text-sm font-medium transition-colors duration-200 relative group',
+                  isActive 
+                    ? 'text-[#00d4ff] bg-[#00d4ff]/10 border-r-2 border-[#00d4ff]' 
+                    : 'text-gray-300 hover:text-white hover:bg-white/5'
+                )}
+              >
+                <item.icon className="h-5 w-5 flex-shrink-0" />
+                
+                {!collapsed && (
+                  <span className="ml-3 truncate">{item.label}</span>
+                )}
+
+                {/* Tooltip for collapsed state */}
+                {collapsed && (
+                  <div className="absolute left-full ml-2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                    {item.label}
+                  </div>
+                )}
+              </motion.a>
+            )
+          })}
+        </nav>
+      </div>
+    </motion.div>
+  )
+}
+
+export default Sidebar
