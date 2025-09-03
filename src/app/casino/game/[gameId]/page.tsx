@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button'
 import { games } from '@/lib/gameData'
 import { Game } from '@/lib/gameData'
 import CasinoLayout from '@/components/layout/CasinoLayout'
+import MobileGameView from '@/components/ui/MobileGameView'
 import Link from 'next/link'
 
 const GamePage: React.FC = () => {
@@ -20,7 +21,17 @@ const GamePage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true)
   const [isRealPlay, setIsRealPlay] = useState(false)
   const [freeSpins, setFreeSpins] = useState(0)
+  const [isMobile, setIsMobile] = useState(false)
   const iframeRef = useRef<HTMLIFrameElement>(null)
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   useEffect(() => {
     const foundGame = games.find(g => g.id === gameId)
@@ -81,6 +92,16 @@ const GamePage: React.FC = () => {
           </div>
         </div>
       </CasinoLayout>
+    )
+  }
+
+  // Use mobile view on mobile devices
+  if (isMobile) {
+    return (
+      <MobileGameView 
+        game={game} 
+        onBack={() => window.history.back()} 
+      />
     )
   }
 
