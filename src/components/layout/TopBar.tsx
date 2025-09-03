@@ -21,6 +21,7 @@ import NotificationsDropdown from '@/components/ui/NotificationsDropdown'
 import UserDropdown from '@/components/ui/UserDropdown'
 import TopBarCurrencySelector from '@/components/ui/TopBarCurrencySelector'
 import { useUserStore } from '@/store/userStore'
+import { formatCurrency } from '@/lib/utils'
 import { useUIStore } from '@/store/uiStore'
 
 interface TopBarProps {
@@ -120,8 +121,7 @@ const TopBar: React.FC<TopBarProps> = ({
                 onClick={() => setWalletModal(true)}
                 className="bg-blue-600 hover:bg-blue-700 text-white font-semibold transition-all duration-200 text-xs md:text-sm px-2 md:px-4"
               >
-                <span className="hidden sm:block">Wallet</span>
-                <span className="sm:hidden">$$</span>
+                Wallet
               </Button>
             </>
           ) : (

@@ -49,8 +49,7 @@ const TopBarCurrencySelector: React.FC<TopBarCurrencySelectorProps> = ({
             ) : (
               <Coins className="h-3 w-3 md:h-4 md:w-4 text-purple-400" />
             )}
-            <span className="text-xs md:text-sm font-medium hidden sm:block">{getBalanceDisplay()}</span>
-            <span className="text-xs font-medium sm:hidden">{selectedCurrency}</span>
+            <span className="text-xs md:text-sm font-medium">{getBalanceDisplay()}</span>
           </div>
           {isOpen ? (
             <ChevronUp className="h-3 w-3 text-gray-400" />
