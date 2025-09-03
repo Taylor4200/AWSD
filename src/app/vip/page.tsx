@@ -17,7 +17,9 @@ import {
   Target,
   CheckCircle,
   Lock,
-  ArrowRight
+  ArrowRight,
+  Calendar,
+  RotateCcw
 } from 'lucide-react'
 import CasinoLayout from '@/components/layout/CasinoLayout'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
@@ -32,32 +34,69 @@ export default function VIPPage() {
 
   const vipTiers: VIPTier[] = [
     {
+      id: 'unranked',
+      name: 'Unranked',
+      level: 0,
+      minXP: 0,
+      color: '#6B7280',
+      icon: '⭐',
+      instantRakeback: '❌',
+      weeklyRakeback: '❌',
+      monthlyRakeback: '❌',
+      gcBonus: '✅ very small GC XP gain',
+      personalManager: false,
+      prioritySupport: false,
+      benefits: [
+        {
+          id: '1',
+          type: 'daily',
+          title: 'Daily Login Rewards',
+          description: 'Basic daily login bonus calendar',
+          icon: 'calendar'
+        },
+        {
+          id: '2',
+          type: 'gc',
+          title: 'Small GC XP Gain',
+          description: 'Earn small amounts of GC XP from gameplay',
+          icon: 'star'
+        }
+      ]
+    },
+    {
       id: 'bronze',
       name: 'Bronze',
       level: 1,
-      minWager: 0,
+      minXP: 5001,
       color: '#CD7F32',
       icon: '🥉',
-      rakeback: 5,
-      bonusMultiplier: 1.0,
-      withdrawalLimit: 10000,
+      instantRakeback: '✅ small',
+      weeklyRakeback: '❌',
+      monthlyRakeback: '❌',
+      gcBonus: '✅ small GC XP gain',
       personalManager: false,
       prioritySupport: false,
       benefits: [
         {
           id: '1',
           type: 'rakeback',
-          title: '5% Rakeback',
-          description: 'Earn 5% back on all your wagers',
-          icon: 'percent'
+          title: 'Small Instant Rakeback',
+          description: 'Earn small instant rakeback on every bet',
+          icon: 'trending-up'
         },
         {
           id: '2',
-          type: 'bonus',
-          title: 'Weekly Bonus',
-          description: 'Receive weekly reload bonuses',
-          value: '$50',
-          icon: 'gift'
+          type: 'daily',
+          title: 'Enhanced Daily Rewards',
+          description: 'Improved daily login bonus calendar',
+          icon: 'calendar'
+        },
+        {
+          id: '3',
+          type: 'gc',
+          title: 'Small GC XP Gain',
+          description: 'Earn small amounts of GC XP from gameplay',
+          icon: 'star'
         }
       ]
     },
@@ -65,37 +104,43 @@ export default function VIPPage() {
       id: 'silver',
       name: 'Silver',
       level: 2,
-      minWager: 10000,
+      minXP: 20001,
       color: '#C0C0C0',
       icon: '🥈',
-      rakeback: 8,
-      bonusMultiplier: 1.1,
-      withdrawalLimit: 25000,
+      instantRakeback: '✅ small',
+      weeklyRakeback: '✅ small',
+      monthlyRakeback: '❌',
+      gcBonus: '✅ small GC reward',
       personalManager: false,
       prioritySupport: false,
       benefits: [
         {
           id: '1',
           type: 'rakeback',
-          title: '8% Rakeback',
-          description: 'Earn 8% back on all your wagers',
-          icon: 'percent'
+          title: 'Small Instant Rakeback',
+          description: 'Earn small instant rakeback on every bet',
+          icon: 'trending-up'
         },
         {
           id: '2',
-          type: 'bonus',
-          title: 'Weekly Bonus',
-          description: 'Enhanced weekly reload bonuses',
-          value: '$100',
-          icon: 'gift'
+          type: 'weekly',
+          title: 'Small Weekly Rakeback',
+          description: 'Claim small weekly rakeback rewards',
+          icon: 'target'
         },
         {
           id: '3',
-          type: 'cashback',
-          title: 'Loss Cashback',
-          description: '5% cashback on net losses',
-          value: '5%',
-          icon: 'shield'
+          type: 'daily',
+          title: 'Enhanced Daily Rewards',
+          description: 'Improved daily login bonus calendar',
+          icon: 'calendar'
+        },
+        {
+          id: '4',
+          type: 'gc',
+          title: 'Small GC Reward',
+          description: 'Earn small GC rewards from gameplay',
+          icon: 'star'
         }
       ]
     },
@@ -103,37 +148,36 @@ export default function VIPPage() {
       id: 'gold',
       name: 'Gold',
       level: 3,
-      minWager: 50000,
+      minXP: 50001,
       color: '#FFD700',
       icon: '🥇',
-      rakeback: 12,
-      bonusMultiplier: 1.2,
-      withdrawalLimit: 50000,
+      instantRakeback: '✅ medium',
+      weeklyRakeback: '✅ medium',
+      monthlyRakeback: '✅ small',
+      gcBonus: '✅ medium GC reward',
       personalManager: false,
       prioritySupport: true,
       benefits: [
         {
           id: '1',
           type: 'rakeback',
-          title: '12% Rakeback',
-          description: 'Earn 12% back on all your wagers',
-          icon: 'percent'
+          title: 'Medium Instant Rakeback',
+          description: 'Earn medium instant rakeback on every bet',
+          icon: 'trending-up'
         },
         {
           id: '2',
-          type: 'bonus',
-          title: 'Weekly Bonus',
-          description: 'Premium weekly reload bonuses',
-          value: '$250',
-          icon: 'gift'
+          type: 'weekly',
+          title: 'Medium Weekly Rakeback',
+          description: 'Claim medium weekly rakeback rewards',
+          icon: 'target'
         },
         {
           id: '3',
-          type: 'cashback',
-          title: 'Loss Cashback',
-          description: '10% cashback on net losses',
-          value: '10%',
-          icon: 'shield'
+          type: 'monthly',
+          title: 'Small Monthly Rakeback',
+          description: 'Claim small monthly rakeback rewards',
+          icon: 'award'
         },
         {
           id: '4',
@@ -141,6 +185,13 @@ export default function VIPPage() {
           title: 'Priority Support',
           description: 'Skip the queue with priority support',
           icon: 'headphones'
+        },
+        {
+          id: '5',
+          type: 'gc',
+          title: 'Medium GC Reward',
+          description: 'Earn medium GC rewards from gameplay',
+          icon: 'star'
         }
       ]
     },
@@ -148,37 +199,36 @@ export default function VIPPage() {
       id: 'platinum',
       name: 'Platinum',
       level: 4,
-      minWager: 250000,
+      minXP: 150001,
       color: '#E5E4E2',
       icon: '💎',
-      rakeback: 15,
-      bonusMultiplier: 1.3,
-      withdrawalLimit: 100000,
+      instantRakeback: '✅ medium',
+      weeklyRakeback: '✅ medium',
+      monthlyRakeback: '✅ medium',
+      gcBonus: '✅ medium GC reward',
       personalManager: true,
       prioritySupport: true,
       benefits: [
         {
           id: '1',
           type: 'rakeback',
-          title: '15% Rakeback',
-          description: 'Earn 15% back on all your wagers',
-          icon: 'percent'
+          title: 'Medium Instant Rakeback',
+          description: 'Earn medium instant rakeback on every bet',
+          icon: 'trending-up'
         },
         {
           id: '2',
-          type: 'bonus',
-          title: 'Weekly Bonus',
-          description: 'Exclusive weekly reload bonuses',
-          value: '$500',
-          icon: 'gift'
+          type: 'weekly',
+          title: 'Medium Weekly Rakeback',
+          description: 'Claim medium weekly rakeback rewards',
+          icon: 'target'
         },
         {
           id: '3',
-          type: 'cashback',
-          title: 'Loss Cashback',
-          description: '15% cashback on net losses',
-          value: '15%',
-          icon: 'shield'
+          type: 'monthly',
+          title: 'Medium Monthly Rakeback',
+          description: 'Claim medium monthly rakeback rewards',
+          icon: 'award'
         },
         {
           id: '4',
@@ -193,6 +243,13 @@ export default function VIPPage() {
           title: 'Exclusive Events',
           description: 'Access to VIP tournaments and events',
           icon: 'trophy'
+        },
+        {
+          id: '6',
+          type: 'gc',
+          title: 'Medium GC Reward',
+          description: 'Earn medium GC rewards from gameplay',
+          icon: 'star'
         }
       ]
     },
@@ -200,37 +257,36 @@ export default function VIPPage() {
       id: 'diamond',
       name: 'Diamond',
       level: 5,
-      minWager: 1000000,
+      minXP: 400001,
       color: '#B9F2FF',
       icon: '💍',
-      rakeback: 20,
-      bonusMultiplier: 1.5,
-      withdrawalLimit: 250000,
+      instantRakeback: '✅ medium',
+      weeklyRakeback: '✅ high',
+      monthlyRakeback: '✅ medium/high',
+      gcBonus: '✅ medium/high GC reward',
       personalManager: true,
       prioritySupport: true,
       benefits: [
         {
           id: '1',
           type: 'rakeback',
-          title: '20% Rakeback',
-          description: 'Maximum rakeback on all wagers',
-          icon: 'percent'
+          title: 'High Instant Rakeback',
+          description: 'Earn high instant rakeback on every bet',
+          icon: 'trending-up'
         },
         {
           id: '2',
-          type: 'bonus',
-          title: 'Weekly Bonus',
-          description: 'Ultimate weekly reload bonuses',
-          value: '$1,000',
-          icon: 'gift'
+          type: 'weekly',
+          title: 'High Weekly Rakeback',
+          description: 'Claim high weekly rakeback rewards',
+          icon: 'target'
         },
         {
           id: '3',
-          type: 'cashback',
-          title: 'Loss Cashback',
-          description: '20% cashback on net losses',
-          value: '20%',
-          icon: 'shield'
+          type: 'monthly',
+          title: 'Medium/High Monthly Rakeback',
+          description: 'Claim medium/high monthly rakeback rewards',
+          icon: 'award'
         },
         {
           id: '4',
@@ -252,22 +308,159 @@ export default function VIPPage() {
           title: 'Monthly Gifts',
           description: 'Physical gifts and merchandise',
           icon: 'gift'
+        },
+        {
+          id: '7',
+          type: 'gc',
+          title: 'Medium/High GC Reward',
+          description: 'Earn medium/high GC rewards from gameplay',
+          icon: 'star'
+        }
+      ]
+    },
+    {
+      id: 'elite',
+      name: 'Elite',
+      level: 6,
+      minXP: 1200001,
+      color: '#FF69B4',
+      icon: '👑',
+      instantRakeback: '✅ very high',
+      weeklyRakeback: '✅ high',
+      monthlyRakeback: '✅ high',
+      gcBonus: '✅ high GC reward',
+      personalManager: true,
+      prioritySupport: true,
+      benefits: [
+        {
+          id: '1',
+          type: 'rakeback',
+          title: 'Very High Instant Rakeback',
+          description: 'Earn very high instant rakeback on every bet',
+          icon: 'trending-up'
+        },
+        {
+          id: '2',
+          type: 'weekly',
+          title: 'High Weekly Rakeback',
+          description: 'Claim high weekly rakeback rewards',
+          icon: 'target'
+        },
+        {
+          id: '3',
+          type: 'monthly',
+          title: 'High Monthly Rakeback',
+          description: 'Claim high monthly rakeback rewards',
+          icon: 'award'
+        },
+        {
+          id: '4',
+          type: 'support',
+          title: 'Elite Personal Manager',
+          description: '24/7 elite VIP account manager',
+          icon: 'user'
+        },
+        {
+          id: '5',
+          type: 'exclusive',
+          title: 'Elite Events',
+          description: 'Exclusive elite tournaments and experiences',
+          icon: 'trophy'
+        },
+        {
+          id: '6',
+          type: 'gift',
+          title: 'Elite Gifts',
+          description: 'Premium physical gifts and merchandise',
+          icon: 'gift'
+        },
+        {
+          id: '7',
+          type: 'gc',
+          title: 'High GC Reward',
+          description: 'Earn high GC rewards from gameplay',
+          icon: 'star'
+        }
+      ]
+    },
+    {
+      id: 'legend',
+      name: 'Legend',
+      level: 7,
+      minXP: 3000001,
+      color: '#FF4500',
+      icon: '🔥',
+      instantRakeback: '✅ very high',
+      weeklyRakeback: '✅ very high',
+      monthlyRakeback: '✅ very high',
+      gcBonus: '✅ high GC reward',
+      personalManager: true,
+      prioritySupport: true,
+      benefits: [
+        {
+          id: '1',
+          type: 'rakeback',
+          title: 'Very High Instant Rakeback',
+          description: 'Earn very high instant rakeback on every bet',
+          icon: 'trending-up'
+        },
+        {
+          id: '2',
+          type: 'weekly',
+          title: 'Very High Weekly Rakeback',
+          description: 'Claim very high weekly rakeback rewards',
+          icon: 'target'
+        },
+        {
+          id: '3',
+          type: 'monthly',
+          title: 'Very High Monthly Rakeback',
+          description: 'Claim very high monthly rakeback rewards',
+          icon: 'award'
+        },
+        {
+          id: '4',
+          type: 'support',
+          title: 'Legend Personal Manager',
+          description: '24/7 legend VIP account manager',
+          icon: 'user'
+        },
+        {
+          id: '5',
+          type: 'exclusive',
+          title: 'Legend Events',
+          description: 'Exclusive legend tournaments and experiences',
+          icon: 'trophy'
+        },
+        {
+          id: '6',
+          type: 'gift',
+          title: 'Legend Gifts',
+          description: 'Ultimate physical gifts and merchandise',
+          icon: 'gift'
+        },
+        {
+          id: '7',
+          type: 'gc',
+          title: 'High GC Reward',
+          description: 'Earn high GC rewards from gameplay',
+          icon: 'star'
         }
       ]
     }
   ]
 
   // Mock user VIP progress
-  const currentUserTier = vipTiers[1] // Silver tier
-  const nextTier = vipTiers[2] // Gold tier
-  const currentWager = user?.totalWagered || 25000
+  const currentUserTier = vipTiers[2] // Silver tier
+  const nextTier = vipTiers[3] // Gold tier
+  const currentXP = user?.totalWagered || 25000
   
   const vipProgress: VIPProgress = {
     currentTier: currentUserTier,
     nextTier: nextTier,
-    currentWager: currentWager,
-    wagerToNextTier: nextTier.minWager - currentWager,
-    progressPercentage: (currentWager / nextTier.minWager) * 100,
+    currentXP: currentXP,
+    xpToNextTier: nextTier.minXP - currentXP,
+    progressPercentage: (currentXP / nextTier.minXP) * 100,
     monthlyRakeback: 450.50,
     lifetimeRakeback: 2850.75
   }
@@ -275,9 +468,9 @@ export default function VIPPage() {
   const vipRewards: VIPReward[] = [
     {
       id: '1',
-      type: 'daily',
-      title: 'Daily Rakeback',
-      description: 'Your daily rakeback reward',
+      type: 'instant',
+      title: 'Instant Rakeback',
+      description: 'Your instant rakeback reward',
       amount: 25.50,
       currency: 'coins',
       claimed: false,
@@ -286,8 +479,8 @@ export default function VIPPage() {
     {
       id: '2',
       type: 'weekly',
-      title: 'Weekly Bonus',
-      description: 'Silver tier weekly bonus',
+      title: 'Weekly Rakeback',
+      description: 'Silver tier weekly rakeback',
       amount: 100,
       currency: 'coins',
       claimed: true,
@@ -295,13 +488,13 @@ export default function VIPPage() {
     },
     {
       id: '3',
-      type: 'monthly',
-      title: 'Monthly Cashback',
-      description: 'Loss cashback for this month',
-      amount: 75.25,
+      type: 'daily',
+      title: 'Daily Login Reward',
+      description: 'Day 4 of daily login bonus',
+      amount: 75,
       currency: 'coins',
       claimed: false,
-      availableAt: new Date(Date.now() + 86400000 * 5)
+      availableAt: new Date()
     }
   ]
 
@@ -343,7 +536,7 @@ export default function VIPPage() {
                       {vipProgress.currentTier.name} VIP
                     </h2>
                     <p className="text-gray-400">
-                      Level {vipProgress.currentTier.level} • {vipProgress.currentTier.rakeback}% Rakeback
+                      Level {vipProgress.currentTier.level} • {formatNumber(vipProgress.currentXP)} XP
                     </p>
                   </div>
                 </div>
@@ -363,7 +556,7 @@ export default function VIPPage() {
                       Progress to {vipProgress.nextTier.name}
                     </span>
                     <span className="text-sm text-white font-medium">
-                      {formatCurrency(vipProgress.wagerToNextTier)} to go
+                      {formatNumber(vipProgress.xpToNextTier)} XP to go
                     </span>
                   </div>
                   <div className="w-full bg-gray-700 rounded-full h-3 mb-4">
@@ -374,15 +567,15 @@ export default function VIPPage() {
                   </div>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <span className="text-gray-400">Current Wager: </span>
+                      <span className="text-gray-400">Current XP: </span>
                       <span className="text-white font-medium">
-                        {formatCurrency(vipProgress.currentWager)}
+                        {formatNumber(vipProgress.currentXP)}
                       </span>
                     </div>
                     <div>
                       <span className="text-gray-400">Target: </span>
                       <span className="text-white font-medium">
-                        {formatCurrency(vipProgress.nextTier.minWager)}
+                        {formatNumber(vipProgress.nextTier.minXP)}
                       </span>
                     </div>
                   </div>
@@ -418,7 +611,7 @@ export default function VIPPage() {
             {/* VIP Tiers Grid */}
             <div>
               <h3 className="text-xl font-bold text-white mb-6">VIP Tiers</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {vipTiers.map((tier, index) => (
                   <motion.div
                     key={tier.id}
@@ -432,7 +625,7 @@ export default function VIPPage() {
                       className={`border-2 h-full ${
                         tier.id === vipProgress.currentTier.id 
                           ? 'border-[#00d4ff] bg-[#00d4ff]/5' 
-                          : currentWager >= tier.minWager 
+                          : currentXP >= tier.minXP 
                             ? 'border-green-500/50' 
                             : 'border-[#2d3748]'
                       }`}
@@ -455,26 +648,28 @@ export default function VIPPage() {
                       
                       <CardContent className="space-y-4">
                         <div className="text-center pb-4 border-b border-[#2d3748]">
-                          <div className="text-sm text-gray-400 mb-1">Minimum Wager</div>
+                          <div className="text-sm text-gray-400 mb-1">XP Required</div>
                           <div className="text-lg font-bold text-white">
-                            {formatCurrency(tier.minWager)}
+                            {formatNumber(tier.minXP)}
                           </div>
                         </div>
                         
                         <div className="space-y-3">
                           <div className="flex justify-between">
-                            <span className="text-gray-400 text-sm">Rakeback</span>
-                            <span className="text-green-400 font-bold">{tier.rakeback}%</span>
+                            <span className="text-gray-400 text-sm">Instant</span>
+                            <span className="text-green-400 font-bold">{tier.instantRakeback}</span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-gray-400 text-sm">Bonus Multiplier</span>
-                            <span className="text-blue-400 font-bold">{tier.bonusMultiplier}x</span>
+                            <span className="text-gray-400 text-sm">Weekly</span>
+                            <span className="text-blue-400 font-bold">{tier.weeklyRakeback}</span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-gray-400 text-sm">Withdrawal Limit</span>
-                            <span className="text-white font-bold">
-                              {formatCurrency(tier.withdrawalLimit)}
-                            </span>
+                            <span className="text-gray-400 text-sm">Monthly</span>
+                            <span className="text-purple-400 font-bold">{tier.monthlyRakeback}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-400 text-sm">GC Bonus</span>
+                            <span className="text-yellow-400 font-bold text-xs">{tier.gcBonus}</span>
                           </div>
                           {tier.personalManager && (
                             <div className="flex justify-between">
@@ -507,11 +702,13 @@ export default function VIPPage() {
                     <div className="flex items-start space-x-4">
                       <div className="w-12 h-12 bg-[#00d4ff]/20 rounded-lg flex items-center justify-center">
                         {benefit.type === 'rakeback' && <TrendingUp className="h-6 w-6 text-[#00d4ff]" />}
-                        {benefit.type === 'bonus' && <Gift className="h-6 w-6 text-green-400" />}
-                        {benefit.type === 'cashback' && <Shield className="h-6 w-6 text-blue-400" />}
+                        {benefit.type === 'weekly' && <Target className="h-6 w-6 text-blue-400" />}
+                        {benefit.type === 'monthly' && <Award className="h-6 w-6 text-purple-400" />}
+                        {benefit.type === 'daily' && <Calendar className="h-6 w-6 text-green-400" />}
                         {benefit.type === 'support' && <Users className="h-6 w-6 text-purple-400" />}
                         {benefit.type === 'exclusive' && <Crown className="h-6 w-6 text-yellow-400" />}
                         {benefit.type === 'gift' && <Gem className="h-6 w-6 text-pink-400" />}
+                        {benefit.type === 'gc' && <Star className="h-6 w-6 text-yellow-400" />}
                       </div>
                       <div className="flex-1">
                         <h4 className="text-lg font-bold text-white mb-2">{benefit.title}</h4>
@@ -547,11 +744,13 @@ export default function VIPPage() {
                         <div className="flex items-start space-x-4">
                           <div className="w-12 h-12 bg-gray-600/20 rounded-lg flex items-center justify-center">
                             {benefit.type === 'rakeback' && <TrendingUp className="h-6 w-6 text-gray-500" />}
-                            {benefit.type === 'bonus' && <Gift className="h-6 w-6 text-gray-500" />}
-                            {benefit.type === 'cashback' && <Shield className="h-6 w-6 text-gray-500" />}
+                            {benefit.type === 'weekly' && <Target className="h-6 w-6 text-gray-500" />}
+                            {benefit.type === 'monthly' && <Award className="h-6 w-6 text-gray-500" />}
+                            {benefit.type === 'daily' && <Calendar className="h-6 w-6 text-gray-500" />}
                             {benefit.type === 'support' && <Users className="h-6 w-6 text-gray-500" />}
                             {benefit.type === 'exclusive' && <Crown className="h-6 w-6 text-gray-500" />}
                             {benefit.type === 'gift' && <Gem className="h-6 w-6 text-gray-500" />}
+                            {benefit.type === 'gc' && <Star className="h-6 w-6 text-gray-500" />}
                           </div>
                           <div className="flex-1">
                             <h4 className="text-lg font-bold text-gray-400 mb-2">{benefit.title}</h4>
@@ -593,8 +792,9 @@ export default function VIPPage() {
                   <Card variant="glass" className="border-[#2d3748] p-6">
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center space-x-2">
-                        {reward.type === 'daily' && <Clock className="h-5 w-5 text-blue-400" />}
-                        {reward.type === 'weekly' && <Target className="h-5 w-5 text-green-400" />}
+                        {reward.type === 'instant' && <TrendingUp className="h-5 w-5 text-green-400" />}
+                        {reward.type === 'weekly' && <Target className="h-5 w-5 text-blue-400" />}
+                        {reward.type === 'daily' && <Calendar className="h-5 w-5 text-green-400" />}
                         {reward.type === 'monthly' && <Award className="h-5 w-5 text-purple-400" />}
                         <span className="text-xs uppercase tracking-wide text-gray-400">
                           {reward.type}

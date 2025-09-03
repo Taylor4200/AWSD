@@ -21,7 +21,7 @@ import { formatCurrency, calculateLevel } from '@/lib/utils'
 import { useUserStore } from '@/store/userStore'
 import VaultModal from '@/components/modals/VaultModal'
 import BetHistoryModal from '@/components/modals/BetHistoryModal'
-import RakebackModal from '@/components/modals/RakebackModal'
+import RewardsModal from '@/components/modals/RewardsModal'
 import LiveSupportModal from '@/components/modals/LiveSupportModal'
 import { useRouter } from 'next/navigation'
 
@@ -67,13 +67,13 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ isOpen, onToggle }) => {
       description: 'View your betting activity',
       onClick: () => setActiveModal('history')
     },
-    {
-      id: 'rakeback',
-      label: 'Rakeback',
-      icon: TrendingUp,
-      description: 'Track your rakeback earnings',
-      onClick: () => setActiveModal('rakeback')
-    },
+            {
+          id: 'rakeback',
+          label: 'Rewards',
+          icon: Gift,
+          description: 'Claim daily rewards and track your rakeback',
+          onClick: () => setActiveModal('rakeback')
+        },
     {
       id: 'support',
       label: 'Live Support',
@@ -249,7 +249,7 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ isOpen, onToggle }) => {
       {/* Modals */}
       <VaultModal isOpen={activeModal === 'vault'} onClose={closeModal} />
       <BetHistoryModal isOpen={activeModal === 'history'} onClose={closeModal} />
-      <RakebackModal isOpen={activeModal === 'rakeback'} onClose={closeModal} />
+              <RewardsModal isOpen={activeModal === 'rakeback'} onClose={closeModal} />
       <LiveSupportModal isOpen={activeModal === 'support'} onClose={closeModal} />
     </>
   )

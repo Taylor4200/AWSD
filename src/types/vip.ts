@@ -2,20 +2,21 @@ export interface VIPTier {
   id: string
   name: string
   level: number
-  minWager: number
+  minXP: number
   color: string
   icon: string
   benefits: VIPBenefit[]
-  rakeback: number
-  bonusMultiplier: number
-  withdrawalLimit: number
+  instantRakeback: string
+  weeklyRakeback: string
+  monthlyRakeback: string
+  gcBonus: string
   personalManager: boolean
   prioritySupport: boolean
 }
 
 export interface VIPBenefit {
   id: string
-  type: 'rakeback' | 'bonus' | 'cashback' | 'exclusive' | 'support' | 'withdrawal' | 'gift'
+  type: 'rakeback' | 'bonus' | 'cashback' | 'exclusive' | 'support' | 'withdrawal' | 'gift' | 'daily' | 'weekly' | 'monthly' | 'gc'
   title: string
   description: string
   value?: string
@@ -25,8 +26,8 @@ export interface VIPBenefit {
 export interface VIPProgress {
   currentTier: VIPTier
   nextTier?: VIPTier
-  currentWager: number
-  wagerToNextTier: number
+  currentXP: number
+  xpToNextTier: number
   progressPercentage: number
   monthlyRakeback: number
   lifetimeRakeback: number
@@ -34,7 +35,7 @@ export interface VIPProgress {
 
 export interface VIPReward {
   id: string
-  type: 'daily' | 'weekly' | 'monthly' | 'milestone'
+  type: 'daily' | 'weekly' | 'monthly' | 'milestone' | 'instant' | 'spin_wheel'
   title: string
   description: string
   amount: number
