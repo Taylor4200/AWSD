@@ -17,6 +17,7 @@ export interface User {
   referralCode: string
   referredBy?: string
   isGhostMode: boolean
+  role?: 'user' | 'admin' | 'moderator'
 }
 
 // Game types
