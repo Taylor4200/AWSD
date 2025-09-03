@@ -71,7 +71,7 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ isOpen, onToggle }) => {
           id: 'rakeback',
           label: 'Rewards',
           icon: Gift,
-          description: 'Claim daily rewards and track your rakeback',
+          description: 'Daily rewards & rakeback',
           onClick: () => setActiveModal('rakeback')
         },
     {
@@ -146,7 +146,7 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ isOpen, onToggle }) => {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.95 }}
               transition={{ duration: 0.2 }}
-              className="absolute right-0 top-full mt-2 w-80 z-50"
+              className="absolute right-0 top-full mt-2 w-80 sm:w-96 z-50"
             >
               <Card variant="glass" className="border-[#2d3748] shadow-xl overflow-hidden">
                 {/* User Info Header */}
@@ -223,10 +223,10 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ isOpen, onToggle }) => {
                         className="w-full justify-start p-3 hover:bg-white/5 rounded-lg transition-colors"
                       >
                         <div className="flex items-center space-x-3 w-full">
-                          <item.icon className="h-5 w-5 text-gray-400" />
-                          <div className="flex-1 text-left">
-                            <div className="text-sm font-medium text-white">{item.label}</div>
-                            <div className="text-xs text-gray-400">{item.description}</div>
+                          <item.icon className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                          <div className="flex-1 text-left min-w-0">
+                            <div className="text-sm font-medium text-white truncate">{item.label}</div>
+                            <div className="text-xs text-gray-400 leading-tight">{item.description}</div>
                           </div>
                         </div>
                       </Button>
