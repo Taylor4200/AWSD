@@ -98,11 +98,11 @@ export const games: Game[] = [
     recentWin: 8920,
     popularity: 76
   },
-  {
-    id: 'mission-uncrossable',
-    name: 'Mission Uncrossable',
-    provider: 'ROOBET',
-    category: 'crash',
+          {
+          id: 'mission-uncrossable',
+          name: 'Mission Uncrossable',
+          provider: 'EDGE ORIGINALS',
+          category: 'crash',
     image: '/images/games/mission-uncrossable.jpg',
     description: 'The chicken that never made it across the road',
     rtp: 99.0,
@@ -136,11 +136,11 @@ export const games: Game[] = [
     recentWin: 12340,
     popularity: 85
   },
-  {
-    id: 'dice',
-    name: 'DICE',
-    provider: 'ROOBET',
-    category: 'dice',
+          {
+          id: 'dice',
+          name: 'DICE',
+          provider: 'EDGE ORIGINALS',
+          category: 'dice',
     image: '/images/games/dice.jpg',
     description: 'Classic dice game with provably fair results',
     rtp: 99.0,
