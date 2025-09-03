@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Headphones, 
@@ -26,7 +26,7 @@ import { Button } from '@/components/ui/Button'
 import { useUserStore } from '@/store/userStore'
 
 interface LiveSupportWidgetProps {
-  chatOpen?: boolean
+  // No props needed - controlled by user store
 }
 
 interface Message {
@@ -47,13 +47,21 @@ interface NewsItem {
   important: boolean
 }
 
-const LiveSupportWidget: React.FC<LiveSupportWidgetProps> = ({ chatOpen = false }) => {
+const LiveSupportWidget: React.FC<LiveSupportWidgetProps> = () => {
   const [isOpen, setIsOpen] = useState(false)
   const [activeTab, setActiveTab] = useState('home')
   const [showChat, setShowChat] = useState(false)
   const [chatMessage, setChatMessage] = useState('')
   const [previousTab, setPreviousTab] = useState('home')
-  const { user } = useUserStore()
+  const { user, showLiveSupport, hideLiveSupportWidget } = useUserStore()
+
+  // Show the widget when triggered from the user store
+  useEffect(() => {
+    if (showLiveSupport) {
+      // Don't automatically open the widget, just show the floating button
+      // The widget will open when user clicks the floating button
+    }
+  }, [showLiveSupport])
 
   // Mock data for messages
   const messages: Message[] = [
@@ -470,25 +478,33 @@ const LiveSupportWidget: React.FC<LiveSupportWidgetProps> = ({ chatOpen = false 
     }
   }
 
-  return (
+    return (
     <>
-      {/* Floating Support Button */}
-      <motion.div
-        className="fixed bottom-6 z-50 transition-all duration-300"
-        style={{
-          right: chatOpen ? '340px' : '24px'
-        }}
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        transition={{ delay: 1, type: "spring", stiffness: 260, damping: 20 }}
-      >
-        <Button
-          onClick={() => setIsOpen(true)}
-          className="w-14 h-14 rounded-full bg-[#1a2c38] border-2 border-[#00d4ff] hover:bg-[#00d4ff]/10 hover:shadow-[#00d4ff]/30 transition-all duration-200 group"
-        >
-          <Headphones className="h-6 w-6 text-[#00d4ff] group-hover:scale-110 transition-transform" />
-        </Button>
-      </motion.div>
+             {/* Floating Support Button - Only show when triggered from dropdown */}
+       {showLiveSupport && (
+         <motion.div
+           className="fixed bottom-6 right-6 z-50 transition-all duration-300"
+           initial={{ scale: 0 }}
+           animate={{ scale: 1 }}
+           transition={{ delay: 0.1, type: "spring", stiffness: 260, damping: 20 }}
+         >
+           <div className="relative">
+             <Button
+               onClick={() => setIsOpen(true)}
+               className="w-14 h-14 rounded-full bg-[#1a2c38] border-2 border-[#00d4ff] hover:bg-[#00d4ff]/10 hover:shadow-[#00d4ff]/30 transition-all duration-200 group"
+             >
+               <Headphones className="h-6 w-6 text-[#00d4ff] group-hover:scale-110 transition-transform" />
+             </Button>
+             {/* Small close button to hide the floating button */}
+             <button
+               onClick={() => hideLiveSupportWidget()}
+               className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center text-white text-xs font-bold transition-colors"
+             >
+               ×
+             </button>
+           </div>
+         </motion.div>
+       )}
 
       {/* Support Widget Modal */}
       <AnimatePresence>
@@ -517,17 +533,18 @@ const LiveSupportWidget: React.FC<LiveSupportWidgetProps> = ({ chatOpen = false 
                       <div key={i} className="w-6 h-6 bg-gray-300 rounded-full border-2 border-white"></div>
                     ))}
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => {
-                      setIsOpen(false)
-                      setShowChat(false)
-                      setActiveTab('home')
-                      setPreviousTab('home')
-                    }}
-                    className="text-white hover:bg-white/10"
-                  >
+                                     <Button
+                     variant="ghost"
+                     size="icon"
+                     onClick={() => {
+                       setIsOpen(false)
+                       setShowChat(false)
+                       setActiveTab('home')
+                       setPreviousTab('home')
+                       // Don't hide the floating button - just close the widget
+                     }}
+                     className="text-white hover:bg-white/10"
+                   >
                     <X className="h-4 w-4" />
                   </Button>
                 </div>

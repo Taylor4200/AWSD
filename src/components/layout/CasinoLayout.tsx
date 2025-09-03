@@ -179,7 +179,7 @@ const CasinoLayout: React.FC<CasinoLayoutProps> = ({ children }) => {
       )}
 
       {/* Live Support Widget */}
-      <LiveSupportWidget chatOpen={chatOpen || mobileChatOpen} />
+      <LiveSupportWidget />
     </div>
   )
 }

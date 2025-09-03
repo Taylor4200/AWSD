@@ -8,6 +8,7 @@ interface UserState {
   isLoading: boolean
   transactions: Transaction[]
   achievements: Achievement[]
+  showLiveSupport: boolean
   
   // Actions
   setUser: (user: User | null) => void
@@ -16,6 +17,8 @@ interface UserState {
   addTransaction: (transaction: Transaction) => void
   addAchievement: (achievement: Achievement) => void
   toggleGhostMode: () => void
+  showLiveSupportWidget: () => void
+  hideLiveSupportWidget: () => void
   logout: () => void
 }
 
@@ -27,6 +30,7 @@ export const useUserStore = create<UserState>()(
       isLoading: false,
       transactions: [],
       achievements: [],
+      showLiveSupport: false,
 
       setUser: (user) => 
         set({ 
@@ -72,12 +76,19 @@ export const useUserStore = create<UserState>()(
           return { user: updatedUser }
         }),
 
+      showLiveSupportWidget: () =>
+        set({ showLiveSupport: true }),
+
+      hideLiveSupportWidget: () =>
+        set({ showLiveSupport: false }),
+
       logout: () =>
         set({
           user: null,
           isAuthenticated: false,
           transactions: [],
-          achievements: []
+          achievements: [],
+          showLiveSupport: false
         }),
     }),
     {
@@ -86,6 +97,7 @@ export const useUserStore = create<UserState>()(
         user: state.user,
         isAuthenticated: state.isAuthenticated,
         achievements: state.achievements,
+        showLiveSupport: state.showLiveSupport,
       }),
     }
   )
