@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { 
@@ -41,13 +41,24 @@ const TopBar: React.FC<TopBarProps> = ({
   const [showNotifications, setShowNotifications] = useState(false)
   const [showBalance, setShowBalance] = useState(false)
   const [showUserMenu, setShowUserMenu] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+
+  // Check if mobile on mount
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   return (
     <div 
       className="fixed top-0 bg-[#0f1419] border-b border-[#2d3748] z-20 transition-all duration-300 w-full"
       style={{ 
-        left: window.innerWidth >= 768 ? (sidebarCollapsed ? 64 : 240) : 0,
-        right: window.innerWidth >= 768 ? (chatOpen ? 320 : 0) : 0
+        left: !isMobile ? (sidebarCollapsed ? 64 : 240) : 0,
+        right: !isMobile ? (chatOpen ? 320 : 0) : 0
       }}
     >
       <div className="flex items-center justify-between h-16 px-4 md:px-6">

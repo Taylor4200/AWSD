@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Sidebar from './Sidebar'
 import ChatSidebar from './ChatSidebar'
@@ -20,11 +20,22 @@ const CasinoLayout: React.FC<CasinoLayoutProps> = ({ children }) => {
   const [chatOpen, setChatOpen] = useState(false) // Default closed on mobile
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
   const [mobileChatOpen, setMobileChatOpen] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
   const [userStatsModal, setUserStatsModal] = useState<{ isOpen: boolean; user: any }>({
     isOpen: false,
     user: null
   })
   const { showWalletModal, setWalletModal } = useUIStore()
+
+  // Check if mobile on mount
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   const handleShowUserStats = (user: any) => {
     setUserStatsModal({ isOpen: true, user })
@@ -35,7 +46,7 @@ const CasinoLayout: React.FC<CasinoLayoutProps> = ({ children }) => {
   }
 
   const handleToggleSidebar = () => {
-    if (window.innerWidth < 768) {
+    if (isMobile) {
       setMobileSidebarOpen(!mobileSidebarOpen)
       setMobileChatOpen(false) // Close chat when opening sidebar
     } else {
@@ -44,7 +55,7 @@ const CasinoLayout: React.FC<CasinoLayoutProps> = ({ children }) => {
   }
 
   const handleToggleChat = () => {
-    if (window.innerWidth < 768) {
+    if (isMobile) {
       setMobileChatOpen(!mobileChatOpen)
       setMobileSidebarOpen(false) // Close sidebar when opening chat
     } else {
@@ -140,8 +151,8 @@ const CasinoLayout: React.FC<CasinoLayoutProps> = ({ children }) => {
       <motion.main
         className="transition-all duration-300 pt-16 md:pt-16"
         style={{
-          marginLeft: window.innerWidth >= 768 ? (sidebarCollapsed ? 64 : 240) : 0,
-          marginRight: window.innerWidth >= 768 ? (chatOpen ? 320 : 0) : 0,
+          marginLeft: !isMobile ? (sidebarCollapsed ? 64 : 240) : 0,
+          marginRight: !isMobile ? (chatOpen ? 320 : 0) : 0,
         }}
       >
         <div className="min-h-screen flex flex-col">
