@@ -55,10 +55,11 @@ const TopBar: React.FC<TopBarProps> = ({
 
   return (
     <div 
-      className="fixed top-0 bg-[#0f1419] border-b border-[#2d3748] z-20 transition-all duration-300 w-full"
+      className="fixed top-0 bg-[#0f1419] border-b border-[#2d3748] z-20 transition-all duration-300"
       style={{ 
-        left: !isMobile ? (sidebarCollapsed ? 64 : 240) : 0,
-        right: !isMobile ? (chatOpen ? 320 : 0) : 0
+        left: isMobile ? 0 : (sidebarCollapsed ? 64 : 240),
+        right: isMobile ? 0 : (chatOpen ? 320 : 0),
+        width: isMobile ? '100vw' : `calc(100vw - ${sidebarCollapsed ? 64 : 240}px - ${chatOpen ? 320 : 0}px)`
       }}
     >
       <div className="flex items-center justify-between h-16 px-4 md:px-6">
@@ -83,16 +84,6 @@ const TopBar: React.FC<TopBarProps> = ({
           >
             <Menu className="h-5 w-5" />
           </Button>
-
-          {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2">
-            <img 
-              src="/Logo11.png" 
-              alt="EDGE Casino" 
-              className="w-8 h-8 object-contain"
-            />
-            <span className="text-lg font-bold text-white hidden sm:block">EDGE</span>
-          </Link>
 
           {/* Search - Hidden on mobile */}
           <div className="relative hidden md:block">

@@ -151,8 +151,8 @@ const CasinoLayout: React.FC<CasinoLayoutProps> = ({ children }) => {
       <motion.main
         className="transition-all duration-300 pt-16 md:pt-16"
         style={{
-          marginLeft: !isMobile ? (sidebarCollapsed ? 64 : 240) : 0,
-          marginRight: !isMobile ? (chatOpen ? 320 : 0) : 0,
+          marginLeft: isMobile ? 0 : (sidebarCollapsed ? 64 : 240),
+          marginRight: isMobile ? 0 : (chatOpen ? 320 : 0),
         }}
       >
         <div className="min-h-screen flex flex-col">
