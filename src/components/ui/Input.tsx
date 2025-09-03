@@ -41,7 +41,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             )}
             ref={ref}
             whileFocus={{ scale: 1.02 }}
-            {...props}
+            {...(props as any)}
           />
         </div>
         {error && (

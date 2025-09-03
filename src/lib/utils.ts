@@ -5,6 +5,11 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+// Utility type to handle motion component props
+export type MotionProps<T> = T & {
+  [K in keyof T]: T[K] extends React.HTMLAttributes<any> ? any : T[K]
+}
+
 export function formatCurrency(
   amount: number,
   currency: 'USD' | 'coins' | 'sweepstakes_coins' = 'USD',

@@ -36,7 +36,7 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
           glowClasses,
           className
         )}
-        {...props}
+        {...(props as any)}
       >
         {children}
       </motion.div>
