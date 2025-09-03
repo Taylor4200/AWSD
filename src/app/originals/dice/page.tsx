@@ -352,9 +352,9 @@ const EdgeDice: React.FC = () => {
             <p className="text-gray-400 text-lg">Provably Fair Dice Game • 1% House Edge</p>
           </div>
 
-                     <div className="grid grid-cols-1 xl:grid-cols-4 gap-4">
+                     <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
                          {/* Main Game Area */}
-                           <div className="xl:col-span-3 space-y-4">
+                           <div className="lg:col-span-3 space-y-4">
                                                {/* Game Board */}
                 <Card variant="glass" className="border-[#2d3748]">
                   <CardContent className="p-4">
@@ -374,18 +374,18 @@ const EdgeDice: React.FC = () => {
                       )}
                     </div>
                     {/* Game Mode Tabs */}
-                    <div className="flex space-x-2 mb-6">
+                    <div className="flex flex-wrap gap-2 mb-6">
                      <Button
                        variant={gameMode === 'manual' ? "default" : "outline"}
                        onClick={() => setGameMode('manual')}
-                       className={gameMode === 'manual' ? 'bg-[#00d4ff] text-black' : ''}
+                       className={`text-sm ${gameMode === 'manual' ? 'bg-[#00d4ff] text-black' : ''}`}
                      >
                        Manual
                      </Button>
                                           <Button
                         variant={gameMode === 'auto' ? "default" : "outline"}
                         onClick={() => setGameMode('auto')}
-                        className={gameMode === 'auto' ? 'bg-[#00d4ff] text-black' : ''}
+                        className={`text-sm ${gameMode === 'auto' ? 'bg-[#00d4ff] text-black' : ''}`}
                       >
                         <Repeat className="h-4 w-4 mr-1" />
                         Auto
@@ -393,7 +393,7 @@ const EdgeDice: React.FC = () => {
                      <Button
                        variant={gameMode === 'turbo' ? "default" : "outline"}
                        onClick={() => setGameMode('turbo')}
-                       className={gameMode === 'turbo' ? 'bg-[#00d4ff] text-black' : ''}
+                       className={`text-sm ${gameMode === 'turbo' ? 'bg-[#00d4ff] text-black' : ''}`}
                      >
                        <Zap className="h-4 w-4 mr-1" />
                        Turbo
@@ -510,50 +510,50 @@ const EdgeDice: React.FC = () => {
                       </div>
                     </div>
 
-                                      {/* Direction Toggle */}
-                    <div className="flex space-x-2 mb-6">
-                      <Button
-                        variant={direction === 'under' ? "default" : "outline"}
-                        onClick={() => setDirection('under')}
-                        className={`flex-1 ${direction === 'under' ? 'bg-[#00d4ff] text-black' : ''}`}
-                      >
-                        Roll Under {target}
-                      </Button>
-                      <Button
-                        variant={direction === 'over' ? "default" : "outline"}
-                        onClick={() => setDirection('over')}
-                        className={`flex-1 ${direction === 'over' ? 'bg-[#00d4ff] text-black' : ''}`}
-                      >
-                        Roll Over {target}
-                      </Button>
-                    </div>
+                                                           {/* Direction Toggle */}
+                     <div className="flex flex-col sm:flex-row gap-2 mb-6">
+                       <Button
+                         variant={direction === 'under' ? "default" : "outline"}
+                         onClick={() => setDirection('under')}
+                         className={`flex-1 text-sm ${direction === 'under' ? 'bg-[#00d4ff] text-black' : ''}`}
+                       >
+                         Roll Under {target}
+                       </Button>
+                       <Button
+                         variant={direction === 'over' ? "default" : "outline"}
+                         onClick={() => setDirection('over')}
+                         className={`flex-1 text-sm ${direction === 'over' ? 'bg-[#00d4ff] text-black' : ''}`}
+                       >
+                         Roll Over {target}
+                       </Button>
+                     </div>
 
-                    {/* Stake-style Three Parameter Display */}
-                    <div className="grid grid-cols-3 gap-4 mb-6">
-                      <div className="bg-[#1a2c38] rounded-lg p-4">
-                        <div className="text-center">
-                          <div className="text-xs text-gray-400 mb-1">Multiplier</div>
-                                                     <div className="text-2xl font-bold text-[#00d4ff]">
-                             {multiplier < 2 ? multiplier.toFixed(4) : 
-                              multiplier < 10 ? multiplier.toFixed(3) : 
-                              multiplier < 100 ? multiplier.toFixed(2) : 
-                              multiplier.toFixed(1)}x
-                           </div>
-                        </div>
-                      </div>
-                      <div className="bg-[#1a2c38] rounded-lg p-4">
-                        <div className="text-center">
-                          <div className="text-xs text-gray-400 mb-1">Roll {direction === 'under' ? 'Under' : 'Over'}</div>
-                          <div className="text-2xl font-bold text-white">{target}</div>
-                        </div>
-                      </div>
-                                             <div className="bg-[#1a2c38] rounded-lg p-4">
+                                         {/* Stake-style Three Parameter Display */}
+                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+                       <div className="bg-[#1a2c38] rounded-lg p-3">
                          <div className="text-center">
-                           <div className="text-xs text-gray-400 mb-1">Win Chance</div>
-                                                       <div className="text-2xl font-bold text-green-400">{(direction === 'under' ? target : (100 - target)).toFixed(2)}%</div>
+                           <div className="text-xs text-gray-400 mb-1">Multiplier</div>
+                                                      <div className="text-xl font-bold text-[#00d4ff]">
+                              {multiplier < 2 ? multiplier.toFixed(4) : 
+                               multiplier < 10 ? multiplier.toFixed(3) : 
+                               multiplier < 100 ? multiplier.toFixed(2) : 
+                               multiplier.toFixed(1)}x
+                            </div>
                          </div>
                        </div>
-                    </div>
+                       <div className="bg-[#1a2c38] rounded-lg p-3">
+                         <div className="text-center">
+                           <div className="text-xs text-gray-400 mb-1">Roll {direction === 'under' ? 'Under' : 'Over'}</div>
+                           <div className="text-xl font-bold text-white">{target}</div>
+                         </div>
+                       </div>
+                                              <div className="bg-[#1a2c38] rounded-lg p-3">
+                          <div className="text-center">
+                            <div className="text-xs text-gray-400 mb-1">Win Chance</div>
+                                                        <div className="text-xl font-bold text-green-400">{(direction === 'under' ? target : (100 - target)).toFixed(2)}%</div>
+                          </div>
+                        </div>
+                     </div>
 
                                       {/* Roll Button */}
                    <Button
@@ -638,14 +638,14 @@ const EdgeDice: React.FC = () => {
                 {/* Game Stats Card */}
                 <Card variant="glass" className="border-[#2d3748]">
                   <CardContent className="p-3">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="grid grid-cols-2 gap-3">
                       <div className="text-center">
                         <div className="text-xs text-gray-400 mb-1">Total Rolls</div>
-                        <div className="text-lg font-bold text-white">{rollHistory.length}</div>
+                        <div className="text-base font-bold text-white">{rollHistory.length}</div>
                       </div>
                       <div className="text-center">
                         <div className="text-xs text-gray-400 mb-1">Win Rate</div>
-                        <div className="text-lg font-bold text-green-400">
+                        <div className="text-base font-bold text-green-400">
                           {rollHistory.length > 0 
                             ? ((rollHistory.filter(r => r.won).length / rollHistory.length) * 100).toFixed(1)
                             : '0'
@@ -654,7 +654,7 @@ const EdgeDice: React.FC = () => {
                       </div>
                       <div className="text-center">
                         <div className="text-xs text-gray-400 mb-1">Best Win</div>
-                        <div className="text-lg font-bold text-[#00d4ff]">
+                        <div className="text-base font-bold text-[#00d4ff]">
                           {rollHistory.length > 0 
                             ? Math.max(...rollHistory.filter(r => r.won).map(r => r.payout))
                             : '0'
@@ -663,7 +663,7 @@ const EdgeDice: React.FC = () => {
                       </div>
                       <div className="text-center">
                         <div className="text-xs text-gray-400 mb-1">Total Won</div>
-                        <div className="text-lg font-bold text-green-400">
+                        <div className="text-base font-bold text-green-400">
                           {rollHistory.filter(r => r.won).reduce((sum, r) => sum + r.payout, 0).toFixed(2)}
                         </div>
                       </div>
@@ -690,14 +690,14 @@ const EdgeDice: React.FC = () => {
                      />
                    </div>
                    
-                   <div className="flex flex-wrap gap-2">
+                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     {quickBets.map((amount) => (
                       <Button
                         key={amount}
                         variant={betAmount === amount ? "default" : "outline"}
                         size="sm"
                         onClick={() => setBetAmount(amount)}
-                        className={betAmount === amount ? "bg-[#00d4ff] text-black" : ""}
+                        className={`text-xs ${betAmount === amount ? "bg-[#00d4ff] text-black" : ""}`}
                                              >
                          {formatCurrency(amount)} {selectedCurrency}
                        </Button>
@@ -766,32 +766,32 @@ const EdgeDice: React.FC = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                                                               <div className="flex space-x-2">
-                        <Button
-                          variant={turboSpeed === 'fast' ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => setTurboSpeed('fast')}
-                          className={turboSpeed === 'fast' ? 'bg-[#00d4ff] text-black' : ''}
-                        >
-                          Fast
-                        </Button>
-                        <Button
-                          variant={turboSpeed === 'ultra' ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => setTurboSpeed('ultra')}
-                          className={turboSpeed === 'ultra' ? 'bg-[#00d4ff] text-black' : ''}
-                        >
-                          Ultra
-                        </Button>
-                        <Button
-                          variant={turboSpeed === 'instant' ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => setTurboSpeed('instant')}
-                          className={turboSpeed === 'instant' ? 'bg-[#00d4ff] text-black' : ''}
-                        >
-                          Instant
-                        </Button>
-                      </div>
+                                                                                                                              <div className="grid grid-cols-3 gap-2">
+                         <Button
+                           variant={turboSpeed === 'fast' ? "default" : "outline"}
+                           size="sm"
+                           onClick={() => setTurboSpeed('fast')}
+                           className={`text-xs ${turboSpeed === 'fast' ? 'bg-[#00d4ff] text-black' : ''}`}
+                         >
+                           Fast
+                         </Button>
+                         <Button
+                           variant={turboSpeed === 'ultra' ? "default" : "outline"}
+                           size="sm"
+                           onClick={() => setTurboSpeed('ultra')}
+                           className={`text-xs ${turboSpeed === 'ultra' ? 'bg-[#00d4ff] text-black' : ''}`}
+                         >
+                           Ultra
+                         </Button>
+                         <Button
+                           variant={turboSpeed === 'instant' ? "default" : "outline"}
+                           size="sm"
+                           onClick={() => setTurboSpeed('instant')}
+                           className={`text-xs ${turboSpeed === 'instant' ? 'bg-[#00d4ff] text-black' : ''}`}
+                         >
+                           Instant
+                         </Button>
+                       </div>
                                            <div className="text-xs text-gray-400 text-center">
                         {/* Animation speed info removed */}
                       </div>

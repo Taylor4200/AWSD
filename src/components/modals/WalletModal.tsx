@@ -423,6 +423,8 @@ const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose }) => {
                 </div>
               </div>
             )}
+
+            {activeTab === 'deposit' && (
               <div className="p-6">
                 <h3 className="text-lg font-semibold text-white mb-4">Deposit Funds</h3>
                 
