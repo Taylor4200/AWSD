@@ -63,7 +63,6 @@ const FeaturedGames: React.FC = () => {
               <GameCard 
                 game={game} 
                 variant="featured"
-                onClick={() => console.log(`Playing ${game.name}`)}
               />
             </motion.div>
           ))}
@@ -85,3 +84,73 @@ const FeaturedGames: React.FC = () => {
 }
 
 export default FeaturedGames
+
+
+
+
+        <motion.div
+
+          variants={containerVariants}
+
+          initial="hidden"
+
+          animate="visible"
+
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+
+        >
+
+          {featuredGames.map((game) => (
+            <motion.div
+
+              key={game.id}
+
+              variants={itemVariants}
+
+            >
+              <GameCard 
+                game={game} 
+                variant="featured"
+                onClick={() => console.log(`Playing ${game.name}`)}
+              />
+            </motion.div>
+
+          ))}
+
+        </motion.div>
+
+
+
+        <motion.div
+
+          initial={{ opacity: 0, y: 30 }}
+
+          animate={{ opacity: 1, y: 0 }}
+
+          transition={{ duration: 0.8, delay: 0.8 }}
+
+          className="text-center mt-12"
+
+        >
+
+          <Button variant="outline" size="lg" className="px-8">
+
+            View All Games
+
+          </Button>
+
+        </motion.div>
+
+      </div>
+
+    </section>
+
+  )
+
+}
+
+
+
+export default FeaturedGames
+
+

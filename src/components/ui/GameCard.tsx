@@ -6,14 +6,16 @@ import { Play, Users, Zap, Star, Crown } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { formatCurrency, formatNumber } from '@/lib/utils'
 import { Game } from '@/lib/gameData'
+import Link from 'next/link'
 
 interface GameCardProps {
   game: Game
   variant?: 'default' | 'featured' | 'compact'
   onClick?: () => void
+  onPlay?: (game: Game) => void
 }
 
-const GameCard: React.FC<GameCardProps> = ({ game, variant = 'default', onClick }) => {
+const GameCard: React.FC<GameCardProps> = ({ game, variant = 'default', onClick, onPlay }) => {
   const getVolatilityColor = (volatility: string) => {
     switch (volatility) {
       case 'low': return 'text-green-400'
@@ -70,13 +72,20 @@ const GameCard: React.FC<GameCardProps> = ({ game, variant = 'default', onClick 
             )}
           </div>
 
-          {/* Play Button Overlay */}
-          <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            <Button variant="default" size="sm" className="bg-[#00d4ff] text-black">
-              <Play className="h-4 w-4 mr-1" />
-              PLAY
-            </Button>
-          </div>
+                          {/* Play Button Overlay */}
+                <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <Link href={`/casino/game/${game.id}`}>
+                    <Button 
+                      variant="default" 
+                      size="sm" 
+                      className="bg-[#00d4ff] text-black"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Play className="h-4 w-4 mr-1" />
+                      PLAY
+                    </Button>
+                  </Link>
+                </div>
 
           {/* Player Count */}
           <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded-full flex items-center">
@@ -133,13 +142,20 @@ const GameCard: React.FC<GameCardProps> = ({ game, variant = 'default', onClick 
             )}
           </div>
 
-          {/* Play Button Overlay */}
-          <div className="absolute inset-0 z-20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            <Button variant="default" size="lg" className="bg-[#00d4ff] text-black">
-              <Play className="h-5 w-5 mr-2" />
-              PLAY NOW
-            </Button>
-          </div>
+                          {/* Play Button Overlay */}
+                <div className="absolute inset-0 z-20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <Link href={`/casino/game/${game.id}`}>
+                    <Button 
+                      variant="default" 
+                      size="lg" 
+                      className="bg-[#00d4ff] text-black"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Play className="h-5 w-5 mr-2" />
+                      PLAY NOW
+                    </Button>
+                  </Link>
+                </div>
 
           {/* Recent Win Badge */}
           {game.recentWin && (
@@ -202,13 +218,20 @@ const GameCard: React.FC<GameCardProps> = ({ game, variant = 'default', onClick 
           )}
         </div>
 
-        {/* Play Button Overlay */}
-        <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <Button variant="default" size="lg" className="bg-[#00d4ff] text-black">
-            <Play className="h-5 w-5 mr-2" />
-            PLAY
-          </Button>
-        </div>
+                      {/* Play Button Overlay */}
+              <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <Link href={`/casino/game/${game.id}`}>
+                  <Button 
+                    variant="default" 
+                    size="lg" 
+                    className="bg-[#00d4ff] text-black"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Play className="h-5 w-5 mr-2" />
+                    PLAY
+                  </Button>
+                </Link>
+              </div>
 
         {/* Player Count */}
         <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded-full flex items-center">

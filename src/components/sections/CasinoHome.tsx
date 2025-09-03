@@ -47,10 +47,10 @@ const CasinoHome: React.FC = () => {
             transition={{ duration: 0.8 }}
             className="text-center"
           >
-            {/* Weekly Raffle Banner */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
+      {/* Weekly Raffle Banner */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
               className="max-w-4xl mx-auto"
             >
@@ -62,7 +62,7 @@ const CasinoHome: React.FC = () => {
                   <div className="absolute bottom-4 left-4 w-24 h-24 bg-[#00d4ff]/10 rounded-full blur-3xl" />
                 </div>
 
-                <div className="relative z-10">
+        <div className="relative z-10">
                   {/* Mobile Layout */}
                   <div className="md:hidden">
                     <div className="text-center mb-6">
@@ -102,27 +102,27 @@ const CasinoHome: React.FC = () => {
 
                   {/* Desktop Layout */}
                   <div className="hidden md:flex items-center justify-between">
-                    <div>
+            <div>
                       <div className="flex items-center mb-3">
                         <div className="w-8 h-8 bg-[#00d4ff] rounded-full flex items-center justify-center mr-3">
                           <span className="text-black font-bold text-sm">🎰</span>
                         </div>
                         <h2 className="text-3xl font-bold text-white">
                           $100,000 Weekly Raffle
-                        </h2>
+              </h2>
                       </div>
                       <p className="text-gray-300 text-lg mb-6 max-w-md">
                         Earn tickets with every wager and compete for massive prizes! Join thousands of players in our biggest weekly event.
                       </p>
-                      <Button 
-                        variant="default" 
+              <Button 
+                variant="default" 
                         className="bg-[#00d4ff] hover:bg-[#00d4ff]/90 text-black font-bold px-8 py-3 text-lg shadow-lg shadow-[#00d4ff]/25"
                         onClick={() => window.location.href = '/raffle/weeklyraffle0901'}
-                      >
+              >
                         🎫 Enter Raffle
-                      </Button>
-                    </div>
-                    <div className="text-right">
+              </Button>
+            </div>
+            <div className="text-right">
                       <div className="bg-black/30 backdrop-blur-sm rounded-xl p-6 border border-[#00d4ff]/20">
                         <div className="text-[#00d4ff] text-sm font-semibold mb-2">⏰ Time Left</div>
                         <div className="text-3xl font-bold text-white mb-4">4d 21h 26m</div>
@@ -134,50 +134,50 @@ const CasinoHome: React.FC = () => {
                             👥 Participants: <span className="text-[#00d4ff] font-bold">2,341</span>
                           </div>
                         </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
+              </div>
+            </div>
+          </div>
+        </div>
+        
                 {/* Floating elements animation */}
                 <div className="absolute inset-0 overflow-hidden pointer-events-none">
                   {[...Array(8)].map((_, i) => (
-                    <motion.div
-                      key={i}
+            <motion.div
+              key={i}
                       className="absolute w-2 h-2 bg-[#00d4ff]/40 rounded-full"
-                      style={{
+              style={{
                         left: `${10 + i * 12}%`,
                         top: `${20 + i * 8}%`,
-                      }}
-                      animate={{
+              }}
+              animate={{
                         y: [0, -15, 0],
                         opacity: [0.3, 0.8, 0.3],
                         scale: [1, 1.5, 1],
-                      }}
-                      transition={{
+              }}
+              transition={{
                         duration: 4,
-                        repeat: Infinity,
-                        delay: i * 0.5,
-                      }}
-                    />
-                  ))}
-                </div>
+                repeat: Infinity,
+                delay: i * 0.5,
+              }}
+            />
+          ))}
+        </div>
 
                 {/* Prize highlight */}
                 <div className="absolute top-1 left-1/2 transform -translate-x-1/2">
-                  <motion.div
+          <motion.div
                     className="bg-gradient-to-r from-yellow-400 to-orange-400 text-black px-2 py-0.5 md:px-3 md:py-1 rounded-full font-bold text-xs shadow-lg"
                     animate={{ scale: [1, 1.05, 1] }}
                     transition={{ duration: 2, repeat: Infinity }}
                   >
                     🏆 $100K Prize Pool
                   </motion.div>
-                </div>
               </div>
-            </motion.div>
+            </div>
           </motion.div>
+          </motion.div>
+          </div>
         </div>
-      </div>
 
       {/* Filters */}
       <div className="container mx-auto px-4 py-8">
@@ -213,17 +213,16 @@ const CasinoHome: React.FC = () => {
               <GameCard 
                 game={game} 
                 variant="compact"
-                onClick={() => console.log(`Playing ${game.name}`)}
               />
-            </motion.div>
-          ))}
-        </div>
+                             </motion.div>
+                           ))}
+                         </div>
 
         {searchedGames.length === 0 && (
           <div className="text-center py-12">
             <p className="text-gray-400 text-lg">No games found matching your search.</p>
-          </div>
-        )}
+                     </div>
+                   )}
       </div>
     </div>
   )
