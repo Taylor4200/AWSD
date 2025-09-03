@@ -7,6 +7,9 @@ interface UIState {
   showWalletModal: boolean
   showPackDrawModal: boolean
   showSettingsModal: boolean
+  showLiveStatsModal: boolean
+  showMyBetsModal: boolean
+  showBetHistoryScroll: boolean
   
   // UI preferences
   soundEnabled: boolean
@@ -27,6 +30,9 @@ interface UIState {
   setWalletModal: (show: boolean) => void
   setPackDrawModal: (show: boolean) => void
   setSettingsModal: (show: boolean) => void
+  setLiveStatsModal: (show: boolean) => void
+  setMyBetsModal: (show: boolean) => void
+  setBetHistoryScroll: (show: boolean) => void
   setSoundEnabled: (enabled: boolean) => void
   setAnimationsEnabled: (enabled: boolean) => void
   setShowChat: (show: boolean) => void
@@ -56,6 +62,9 @@ export const useUIStore = create<UIState>()(
       showWalletModal: false,
       showPackDrawModal: false,
       showSettingsModal: false,
+      showLiveStatsModal: false,
+      showMyBetsModal: false,
+      showBetHistoryScroll: false,
       
       // UI preferences
       soundEnabled: true,
@@ -76,6 +85,9 @@ export const useUIStore = create<UIState>()(
       setWalletModal: (show) => set({ showWalletModal: show }),
       setPackDrawModal: (show) => set({ showPackDrawModal: show }),
       setSettingsModal: (show) => set({ showSettingsModal: show }),
+      setLiveStatsModal: (show) => set({ showLiveStatsModal: show }),
+      setMyBetsModal: (show) => set({ showMyBetsModal: show }),
+      setBetHistoryScroll: (show) => set({ showBetHistoryScroll: show }),
       setSoundEnabled: (enabled) => set({ soundEnabled: enabled }),
       setAnimationsEnabled: (enabled) => set({ animationsEnabled: enabled }),
       setShowChat: (show) => set({ showChat: show }),

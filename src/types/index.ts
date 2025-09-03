@@ -5,8 +5,9 @@ export interface User {
   email: string
   avatar?: string
   walletAddress?: string
-  balance: number
-  sweepstakesCoins: number
+  balance: number // SC (Sweeps Coins) balance
+  gcBalance: number // GC (Gold Coins) balance
+  sweepstakesCoins: number // Legacy field, keeping for compatibility
   level: number
   experience: number
   totalWagered: number

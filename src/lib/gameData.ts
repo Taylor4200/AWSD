@@ -2,7 +2,7 @@ export interface Game {
   id: string
   name: string
   provider: string
-  category: 'casino' | 'sports' | 'originals' | 'slots' | 'crash' | 'dice' | 'roulette' | 'blackjack' | 'baccarat' | 'poker'
+  category: 'casino' | 'originals' | 'slots' | 'crash' | 'dice' | 'roulette' | 'blackjack' | 'baccarat' | 'poker'
   image: string
   description?: string
   rtp?: number
@@ -231,44 +231,6 @@ export const games: Game[] = [
     tags: ['holographic', 'roulette', '3d'],
     recentWin: 8920,
     popularity: 85
-  },
-
-  // Sports Games
-  {
-    id: 'sports-betting',
-    name: 'Live Sports Betting',
-    provider: 'EDGE SPORTS',
-    category: 'sports',
-    image: '/images/games/sports-betting.jpg',
-    description: 'Live sports betting with real-time odds and instant payouts',
-    rtp: 95.0,
-    volatility: 'medium',
-    minBet: 1.00,
-    maxBet: 10000,
-    jackpot: 100000,
-    players: 4567,
-    isHot: true,
-    tags: ['sports', 'live', 'betting'],
-    recentWin: 23450,
-    popularity: 94
-  },
-  {
-    id: 'esports-betting',
-    name: 'Esports Betting',
-    provider: 'EDGE SPORTS',
-    category: 'sports',
-    image: '/images/games/esports-betting.jpg',
-    description: 'Bet on your favorite esports teams and tournaments',
-    rtp: 95.0,
-    volatility: 'medium',
-    minBet: 1.00,
-    maxBet: 5000,
-    jackpot: 50000,
-    players: 2341,
-    isNew: true,
-    tags: ['esports', 'gaming', 'tournaments'],
-    recentWin: 12340,
-    popularity: 89
   },
 
   // Originals

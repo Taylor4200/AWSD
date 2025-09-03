@@ -23,11 +23,11 @@ module.exports = {
           950: '#082f49',
         },
         neon: {
-          blue: '#00f0ff',
-          purple: '#8b5cf6',
-          pink: '#f472b6',
+          blue: '#3b82f6',
+          purple: '#6366f1',
+          pink: '#ec4899',
           green: '#10b981',
-          yellow: '#fbbf24',
+          yellow: '#f59e0b',
           orange: '#f97316',
         },
         dark: {
@@ -45,7 +45,7 @@ module.exports = {
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
         'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
-        'neon-gradient': 'linear-gradient(45deg, #00f0ff, #8b5cf6, #f472b6)',
+        'neon-gradient': 'linear-gradient(45deg, #3b82f6, #6366f1, #ec4899)',
         'casino-gradient': 'linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 50%, #16213e 100%)',
         'card-gradient': 'linear-gradient(145deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)',
       },
@@ -60,19 +60,19 @@ module.exports = {
         'pulse-neon': {
           '0%, 100%': {
             opacity: 1,
-            boxShadow: '0 0 20px #00f0ff, 0 0 40px #00f0ff, 0 0 80px #00f0ff',
+            boxShadow: '0 0 5px #3b82f6, 0 0 10px #3b82f6',
           },
           '50%': {
             opacity: 0.8,
-            boxShadow: '0 0 10px #00f0ff, 0 0 20px #00f0ff, 0 0 40px #00f0ff',
+            boxShadow: '0 0 15px #3b82f6, 0 0 30px #3b82f6',
           },
         },
         'glow': {
           'from': {
-            textShadow: '0 0 20px #00f0ff, 0 0 30px #00f0ff, 0 0 40px #00f0ff',
+            textShadow: '0 0 5px #3b82f6, 0 0 10px #3b82f6',
           },
           'to': {
-            textShadow: '0 0 10px #00f0ff, 0 0 20px #00f0ff, 0 0 30px #00f0ff',
+            textShadow: '0 0 15px #3b82f6, 0 0 25px #3b82f6',
           },
         },
         'float': {
@@ -88,9 +88,12 @@ module.exports = {
         'xs': '2px',
       },
       boxShadow: {
-        'neon': '0 0 20px #00f0ff, 0 0 40px #00f0ff, 0 0 80px #00f0ff',
-        'neon-purple': '0 0 20px #8b5cf6, 0 0 40px #8b5cf6, 0 0 80px #8b5cf6',
-        'neon-pink': '0 0 20px #f472b6, 0 0 40px #f472b6, 0 0 80px #f472b6',
+        'neon': '0 0 5px #3b82f6, 0 0 10px #3b82f6',
+        'neon-purple': '0 0 5px #6366f1, 0 0 10px #6366f1',
+        'neon-pink': '0 0 5px #ec4899, 0 0 10px #ec4899',
+        'neon-hover': '0 0 20px #3b82f6, 0 0 40px #3b82f6',
+        'neon-purple-hover': '0 0 20px #6366f1, 0 0 40px #6366f1',
+        'neon-pink-hover': '0 0 20px #ec4899, 0 0 40px #ec4899',
         'card': '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
         'card-hover': '0 8px 32px 0 rgba(31, 38, 135, 0.5)',
       },

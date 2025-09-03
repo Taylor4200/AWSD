@@ -19,8 +19,8 @@ import { Button } from './Button'
 import { Card } from './Card'
 import { formatCurrency, calculateLevel } from '@/lib/utils'
 import { useUserStore } from '@/store/userStore'
+import { useUIStore } from '@/store/uiStore'
 import VaultModal from '@/components/modals/VaultModal'
-import BetHistoryModal from '@/components/modals/BetHistoryModal'
 import RewardsModal from '@/components/modals/RewardsModal'
 import LiveSupportModal from '@/components/modals/LiveSupportModal'
 import { useRouter } from 'next/navigation'
@@ -32,7 +32,8 @@ interface UserDropdownProps {
 
 const UserDropdown: React.FC<UserDropdownProps> = ({ isOpen, onToggle }) => {
   const { user, logout } = useUserStore()
-  const [activeModal, setActiveModal] = useState<'vault' | 'history' | 'rakeback' | 'support' | null>(null)
+  const { setMyBetsModal } = useUIStore()
+  const [activeModal, setActiveModal] = useState<'vault' | 'rakeback' | 'support' | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
 
@@ -65,7 +66,7 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ isOpen, onToggle }) => {
       label: 'Bet History',
       icon: History,
       description: 'View your betting activity',
-      onClick: () => setActiveModal('history')
+      onClick: () => setMyBetsModal(true)
     },
             {
           id: 'rakeback',
@@ -173,27 +174,27 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ isOpen, onToggle }) => {
                     </div>
                   </div>
 
-                  {/* Quick Stats */}
-                  <div className="grid grid-cols-3 gap-3 text-center">
-                    <div className="bg-black/20 rounded-lg p-2">
-                      <div className="text-xs text-gray-400">Balance</div>
-                      <div className="text-sm font-bold text-[#00d4ff]">
-                        {formatCurrency(user.balance, 'USD')}
-                      </div>
-                    </div>
-                    <div className="bg-black/20 rounded-lg p-2">
-                      <div className="text-xs text-gray-400">Wagered</div>
-                      <div className="text-sm font-bold text-green-400">
-                        {formatCurrency(user.totalWagered, 'USD')}
-                      </div>
-                    </div>
-                    <div className="bg-black/20 rounded-lg p-2">
-                      <div className="text-xs text-gray-400">Won</div>
-                      <div className="text-sm font-bold text-yellow-400">
-                        {formatCurrency(user.totalWon, 'USD')}
-                      </div>
-                    </div>
-                  </div>
+                                     {/* Quick Stats */}
+                   <div className="grid grid-cols-3 gap-3 text-center">
+                     <div className="bg-black/20 rounded-lg p-2">
+                       <div className="text-xs text-gray-400">SC Balance</div>
+                       <div className="text-sm font-bold text-[#00d4ff]">
+                         {formatCurrency(user.balance, 'USD')}
+                       </div>
+                     </div>
+                     <div className="bg-black/20 rounded-lg p-2">
+                       <div className="text-xs text-gray-400">GC Balance</div>
+                       <div className="text-sm font-bold text-purple-400">
+                         {user.gcBalance || 0} GC
+                       </div>
+                     </div>
+                     <div className="bg-black/20 rounded-lg p-2">
+                       <div className="text-xs text-gray-400">Wagered</div>
+                       <div className="text-sm font-bold text-green-400">
+                         {formatCurrency(user.totalWagered, 'USD')}
+                       </div>
+                     </div>
+                   </div>
 
                   {/* Referral Code */}
                   <div className="mt-3 p-2 bg-black/20 rounded-lg">
@@ -246,10 +247,9 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ isOpen, onToggle }) => {
         </AnimatePresence>
       </div>
 
-      {/* Modals */}
+            {/* Modals */}
       <VaultModal isOpen={activeModal === 'vault'} onClose={closeModal} />
-      <BetHistoryModal isOpen={activeModal === 'history'} onClose={closeModal} />
-              <RewardsModal isOpen={activeModal === 'rakeback'} onClose={closeModal} />
+      <RewardsModal isOpen={activeModal === 'rakeback'} onClose={closeModal} />
       <LiveSupportModal isOpen={activeModal === 'support'} onClose={closeModal} />
     </>
   )

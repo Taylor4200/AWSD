@@ -8,15 +8,15 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: 'bg-neon-blue text-black hover:bg-neon-blue/90 shadow-neon',
+        default: 'bg-neon-blue text-black hover:bg-neon-blue/90 shadow-neon hover:shadow-neon-hover',
         secondary: 'bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm border border-white/20',
-        outline: 'border-2 border-neon-blue text-neon-blue hover:bg-neon-blue hover:text-black',
+        outline: 'border-2 border-neon-blue text-neon-blue hover:bg-neon-blue hover:text-black shadow-neon hover:shadow-neon-hover',
         ghost: 'text-white hover:bg-white/10',
         neon: 'btn-neon bg-transparent border-2 border-neon-blue text-neon-blue hover:bg-neon-blue hover:text-black',
-        gradient: 'bg-gradient-to-r from-neon-blue via-neon-purple to-neon-pink text-white hover:shadow-lg hover:shadow-neon-blue/50',
-        success: 'bg-neon-green text-black hover:bg-neon-green/90 shadow-[0_0_20px_rgba(16,185,129,0.5)]',
-        warning: 'bg-neon-yellow text-black hover:bg-neon-yellow/90 shadow-[0_0_20px_rgba(251,191,36,0.5)]',
-        danger: 'bg-red-500 text-white hover:bg-red-600 shadow-[0_0_20px_rgba(239,68,68,0.5)]',
+        gradient: 'bg-gradient-to-r from-neon-blue via-neon-purple to-neon-pink text-white hover:shadow-lg hover:shadow-neon-hover',
+        success: 'bg-neon-green text-black hover:bg-neon-green/90 shadow-[0_0_10px_rgba(16,185,129,0.3)] hover:shadow-[0_0_20px_rgba(16,185,129,0.5)]',
+        warning: 'bg-neon-yellow text-black hover:bg-neon-yellow/90 shadow-[0_0_10px_rgba(245,158,11,0.3)] hover:shadow-[0_0_20px_rgba(245,158,11,0.5)]',
+        danger: 'bg-red-500 text-white hover:bg-red-600 shadow-[0_0_10px_rgba(239,68,68,0.3)] hover:shadow-[0_0_20px_rgba(239,68,68,0.5)]',
       },
       size: {
         sm: 'h-8 px-3 text-xs',

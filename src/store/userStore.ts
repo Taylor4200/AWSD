@@ -9,6 +9,7 @@ interface UserState {
   transactions: Transaction[]
   achievements: Achievement[]
   showLiveSupport: boolean
+  selectedCurrency: 'GC' | 'SC'
   
   // Actions
   setUser: (user: User | null) => void
@@ -19,6 +20,7 @@ interface UserState {
   toggleGhostMode: () => void
   showLiveSupportWidget: () => void
   hideLiveSupportWidget: () => void
+  setSelectedCurrency: (currency: 'GC' | 'SC') => void
   logout: () => void
 }
 
@@ -31,6 +33,7 @@ export const useUserStore = create<UserState>()(
       transactions: [],
       achievements: [],
       showLiveSupport: false,
+      selectedCurrency: 'SC',
 
       setUser: (user) => 
         set({ 
@@ -47,8 +50,8 @@ export const useUserStore = create<UserState>()(
           
           const updatedUser = {
             ...state.user,
-            [type === 'coins' ? 'balance' : 'sweepstakesCoins']: 
-              state.user[type === 'coins' ? 'balance' : 'sweepstakesCoins'] + amount
+            [type === 'coins' ? 'balance' : 'gcBalance']: 
+              state.user[type === 'coins' ? 'balance' : 'gcBalance'] + amount
           }
           
           return { user: updatedUser }
@@ -82,13 +85,17 @@ export const useUserStore = create<UserState>()(
       hideLiveSupportWidget: () =>
         set({ showLiveSupport: false }),
 
+      setSelectedCurrency: (currency) =>
+        set({ selectedCurrency: currency }),
+
       logout: () =>
         set({
           user: null,
           isAuthenticated: false,
           transactions: [],
           achievements: [],
-          showLiveSupport: false
+          showLiveSupport: false,
+          selectedCurrency: 'SC'
         }),
     }),
     {
@@ -98,6 +105,7 @@ export const useUserStore = create<UserState>()(
         isAuthenticated: state.isAuthenticated,
         achievements: state.achievements,
         showLiveSupport: state.showLiveSupport,
+        selectedCurrency: state.selectedCurrency,
       }),
     }
   )

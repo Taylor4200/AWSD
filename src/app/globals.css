@@ -4,11 +4,11 @@
 @tailwind utilities;
 
 :root {
-  --neon-blue: #00f0ff;
-  --neon-purple: #8b5cf6;
-  --neon-pink: #f472b6;
+  --neon-blue: #3b82f6;
+  --neon-purple: #6366f1;
+  --neon-pink: #ec4899;
   --neon-green: #10b981;
-  --neon-yellow: #fbbf24;
+  --neon-yellow: #f59e0b;
   --neon-orange: #f97316;
 }
 
@@ -67,37 +67,50 @@ body {
 /* Neon text effects */
 .neon-text {
   text-shadow: 
-    0 0 5px currentColor,
-    0 0 10px currentColor,
-    0 0 15px currentColor,
-    0 0 20px currentColor;
+    0 0 1px currentColor,
+    0 0 2px currentColor;
 }
 
 .neon-text-blue {
   color: var(--neon-blue);
   text-shadow: 
-    0 0 5px var(--neon-blue),
-    0 0 10px var(--neon-blue),
-    0 0 15px var(--neon-blue),
-    0 0 20px var(--neon-blue);
+    0 0 1px var(--neon-blue),
+    0 0 2px var(--neon-blue);
+}
+
+.neon-text-blue:hover {
+  text-shadow: 
+    0 0 2px var(--neon-blue),
+    0 0 4px var(--neon-blue),
+    0 0 6px var(--neon-blue);
 }
 
 .neon-text-purple {
   color: var(--neon-purple);
   text-shadow: 
-    0 0 5px var(--neon-purple),
-    0 0 10px var(--neon-purple),
-    0 0 15px var(--neon-purple),
-    0 0 20px var(--neon-purple);
+    0 0 1px var(--neon-purple),
+    0 0 2px var(--neon-purple);
+}
+
+.neon-text-purple:hover {
+  text-shadow: 
+    0 0 2px var(--neon-purple),
+    0 0 4px var(--neon-purple),
+    0 0 6px var(--neon-purple);
 }
 
 .neon-text-pink {
   color: var(--neon-pink);
   text-shadow: 
-    0 0 5px var(--neon-pink),
-    0 0 10px var(--neon-pink),
-    0 0 15px var(--neon-pink),
-    0 0 20px var(--neon-pink);
+    0 0 1px var(--neon-pink),
+    0 0 2px var(--neon-pink);
+}
+
+.neon-text-pink:hover {
+  text-shadow: 
+    0 0 2px var(--neon-pink),
+    0 0 4px var(--neon-pink),
+    0 0 6px var(--neon-pink);
 }
 
 /* Neon border effects */
@@ -121,6 +134,8 @@ body {
   font-weight: 600;
   transition: all 0.3s ease;
   overflow: hidden;
+  box-shadow: 
+    0 0 5px var(--neon-blue);
 }
 
 .btn-neon:hover {
@@ -129,7 +144,7 @@ body {
   box-shadow: 
     0 0 20px var(--neon-blue),
     0 0 40px var(--neon-blue),
-    0 0 80px var(--neon-blue);
+    0 0 60px var(--neon-blue);
 }
 
 .btn-neon::before {
@@ -151,13 +166,15 @@ body {
 .card-hover {
   transition: all 0.3s ease;
   transform-style: preserve-3d;
+  box-shadow: 
+    0 10px 20px rgba(59, 130, 246, 0.1);
 }
 
 .card-hover:hover {
   transform: translateY(-5px) rotateX(5deg) rotateY(5deg);
   box-shadow: 
-    0 20px 40px rgba(0, 240, 255, 0.3),
-    0 0 20px rgba(139, 92, 246, 0.2);
+    0 20px 40px rgba(59, 130, 246, 0.3),
+    0 0 30px rgba(99, 102, 241, 0.2);
 }
 
 /* Particle animation container */
@@ -175,7 +192,7 @@ body {
 .spinner {
   width: 40px;
   height: 40px;
-  border: 4px solid rgba(0, 240, 255, 0.3);
+  border: 4px solid rgba(59, 130, 246, 0.3);
   border-top: 4px solid var(--neon-blue);
   border-radius: 50%;
   animation: spin 1s linear infinite;
@@ -191,16 +208,15 @@ body {
   0%, 100% {
     transform: scale(1);
     text-shadow: 
-      0 0 20px var(--neon-yellow),
-      0 0 40px var(--neon-yellow),
-      0 0 80px var(--neon-yellow);
+      0 0 5px var(--neon-yellow),
+      0 0 10px var(--neon-yellow);
   }
   50% {
     transform: scale(1.05);
     text-shadow: 
+      0 0 15px var(--neon-yellow),
       0 0 30px var(--neon-yellow),
-      0 0 60px var(--neon-yellow),
-      0 0 120px var(--neon-yellow);
+      0 0 45px var(--neon-yellow);
   }
 }
 
@@ -226,6 +242,58 @@ body {
 
 .celebrate {
   animation: celebrate 0.6s ease-in-out;
+}
+
+/* Ticker animations */
+@keyframes ticker-bounce {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-10px) scale(1.1);
+  }
+}
+
+@keyframes ticker-glow {
+  0%, 100% {
+    box-shadow: 
+      0 0 20px rgba(0, 212, 255, 0.5),
+      0 0 40px rgba(0, 212, 255, 0.3),
+      0 0 60px rgba(0, 212, 255, 0.1);
+  }
+  50% {
+    box-shadow: 
+      0 0 30px rgba(0, 212, 255, 0.8),
+      0 0 60px rgba(0, 212, 255, 0.5),
+      0 0 90px rgba(0, 212, 255, 0.3);
+  }
+}
+
+@keyframes ticker-slide {
+  0% {
+    transform: translateX(-100%) scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    transform: translateX(0%) scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(0%) scale(1);
+    opacity: 1;
+  }
+}
+
+.ticker-bounce {
+  animation: ticker-bounce 0.6s ease-in-out infinite;
+}
+
+.ticker-glow {
+  animation: ticker-glow 1s ease-in-out infinite;
+}
+
+.ticker-slide {
+  animation: ticker-slide 0.3s ease-out;
 }
 
 /* Mobile responsiveness */

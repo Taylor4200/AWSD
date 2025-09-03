@@ -18,9 +18,12 @@ import {
   Gamepad2,
   Zap,
   Target,
-  Crown
+  Crown,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/Button'
 
 interface SidebarProps {
   collapsed?: boolean
@@ -34,12 +37,12 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed = false, onCollapse, isMobi
   const navItems = [
     { icon: Home, label: 'Home', href: '/' },
     { icon: Dice1, label: 'Casino', href: '/casino', count: 35419 },
-    { icon: TrendingUp, label: 'Sports', href: '/sports', count: 7783 },
+    { icon: TrendingUp, label: 'Live', href: '/live', count: 7783 },
     { icon: Gamepad2, label: 'Originals', href: '/originals' },
     { icon: Star, label: 'Favorites', href: '/favorites' },
     { icon: Gift, label: 'Promotions', href: '/promotions', badge: 'NEW' },
     { icon: Trophy, label: 'VIP Club', href: '/vip' },
-            { icon: Users, label: 'Refer', href: '/referrals', badge: 'EARN' },
+    { icon: Users, label: 'Refer', href: '/referrals', badge: 'EARN' },
     { icon: Target, label: 'Challenges', href: '/challenges' },
     { icon: Crown, label: 'Rewards', href: '/rewards' },
   ]
@@ -49,6 +52,12 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed = false, onCollapse, isMobi
     { icon: Settings, label: 'Settings', href: '/settings' },
   ]
 
+  const handleToggleCollapse = () => {
+    if (onCollapse) {
+      onCollapse(!collapsed)
+    }
+  }
+
   return (
     <motion.div
       initial={false}
@@ -56,8 +65,8 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed = false, onCollapse, isMobi
       transition={{ duration: 0.3, ease: 'easeInOut' }}
       className={`${isMobile ? 'w-70' : ''} fixed left-0 top-0 h-full bg-[#1a2c38] border-r border-[#2d3748] z-30 flex flex-col`}
     >
-      {/* Logo */}
-      <div className="p-4 border-b border-[#2d3748]">
+      {/* Logo Section */}
+      <div className="p-4 border-b border-[#2d3748] flex items-center justify-between">
         <Link href="/" className="block">
           {collapsed ? (
             <div className="w-8 h-8 flex items-center justify-center">
@@ -78,12 +87,25 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed = false, onCollapse, isMobi
             </div>
           )}
         </Link>
+        
+        {/* Toggle Button - Only show when expanded on desktop */}
+        {!isMobile && !collapsed && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleToggleCollapse}
+            className="h-8 w-8 text-gray-400 hover:text-white hover:bg-white/10"
+            title="Collapse Sidebar"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+        )}
       </div>
 
       {/* Navigation */}
-      <div className="flex-1 py-4 overflow-y-auto">
+      <div className="flex-1 py-4">
         <nav className="space-y-1">
-                    {navItems.map((item) => {
+          {navItems.map((item) => {
             const isActive = pathname === item.href
             return (
               <motion.a
@@ -109,23 +131,36 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed = false, onCollapse, isMobi
                       </span>
                     )}
                     
-                                         {item.badge && (
-                       <span className={`ml-auto text-xs px-2 py-1 rounded-full font-bold ${
-                         item.badge === 'EARN' 
-                           ? 'bg-green-500 text-black' 
-                           : 'bg-[#00d4ff] text-black'
-                       }`}>
-                         {item.badge}
-                       </span>
-                     )}
+                    {item.badge && (
+                      <span className={`ml-auto text-xs px-2 py-1 rounded-full font-bold ${
+                        item.badge === 'EARN' 
+                          ? 'bg-green-500 text-black' 
+                          : 'bg-[#00d4ff] text-black'
+                      }`}>
+                        {item.badge}
+                      </span>
+                    )}
                   </>
                 )}
 
-                {/* Tooltip for collapsed state */}
+                {/* Enhanced Tooltip for collapsed state */}
                 {collapsed && (
-                  <div className="absolute left-full ml-2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
-                    {item.label}
-                    {item.count && ` (${item.count.toLocaleString()})`}
+                  <div className="absolute left-full ml-2 px-3 py-2 bg-black/90 backdrop-blur-sm text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50 shadow-lg border border-white/10">
+                    <div className="font-medium">{item.label}</div>
+                    {item.count && (
+                      <div className="text-green-400 text-xs mt-1">
+                        {item.count.toLocaleString()} games
+                      </div>
+                    )}
+                    {item.badge && (
+                      <div className={`text-xs mt-1 px-1 py-0.5 rounded ${
+                        item.badge === 'EARN' 
+                          ? 'bg-green-500 text-black' 
+                          : 'bg-[#00d4ff] text-black'
+                      }`}>
+                        {item.badge}
+                      </div>
+                    )}
                   </div>
                 )}
               </motion.a>
@@ -157,9 +192,9 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed = false, onCollapse, isMobi
                   <span className="ml-3 truncate">{item.label}</span>
                 )}
 
-                {/* Tooltip for collapsed state */}
+                {/* Enhanced Tooltip for collapsed state */}
                 {collapsed && (
-                  <div className="absolute left-full ml-2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                  <div className="absolute left-full ml-2 px-3 py-2 bg-black/90 backdrop-blur-sm text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50 shadow-lg border border-white/10">
                     {item.label}
                   </div>
                 )}

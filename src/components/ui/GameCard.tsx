@@ -32,7 +32,6 @@ const GameCard: React.FC<GameCardProps> = ({ game, variant = 'default', onClick,
       case 'dice': return 'from-blue-500/20 to-cyan-500/20'
       case 'roulette': return 'from-green-500/20 to-emerald-500/20'
       case 'blackjack': return 'from-yellow-500/20 to-orange-500/20'
-      case 'sports': return 'from-indigo-500/20 to-blue-500/20'
       default: return 'from-gray-500/20 to-gray-600/20'
     }
   }

@@ -29,7 +29,7 @@ const Footer: React.FC = () => {
         { name: 'Crash', href: '/games/crash' },
         { name: 'Dice', href: '/games/dice' },
         { name: 'Roulette', href: '/games/roulette' },
-        { name: 'Pack Draws', href: '/pack-draws' }
+        { name: 'Live Casino', href: '/live' }
       ]
     },
     {

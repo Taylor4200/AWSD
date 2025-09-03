@@ -10,12 +10,16 @@ import {
   ChevronDown,
   Menu,
   MessageCircle,
-  X
+  X,
+  ChevronLeft,
+  ChevronRight,
+  BarChart3,
+  History
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import NotificationsDropdown from '@/components/ui/NotificationsDropdown'
-import BalanceDropdown from '@/components/ui/BalanceDropdown'
 import UserDropdown from '@/components/ui/UserDropdown'
+import TopBarCurrencySelector from '@/components/ui/TopBarCurrencySelector'
 import { useUserStore } from '@/store/userStore'
 import { useUIStore } from '@/store/uiStore'
 
@@ -36,10 +40,9 @@ const TopBar: React.FC<TopBarProps> = ({
   mobileSidebarOpen = false,
   mobileChatOpen = false
 }) => {
-  const { user, isAuthenticated } = useUserStore()
-  const { setAuthModal, setWalletModal } = useUIStore()
+  const { user, isAuthenticated, selectedCurrency, setSelectedCurrency } = useUserStore()
+  const { setAuthModal, setWalletModal, setLiveStatsModal, setMyBetsModal } = useUIStore()
   const [showNotifications, setShowNotifications] = useState(false)
-  const [showBalance, setShowBalance] = useState(false)
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
 
@@ -62,8 +65,8 @@ const TopBar: React.FC<TopBarProps> = ({
         width: isMobile ? '100vw' : `calc(100vw - ${sidebarCollapsed ? 64 : 240}px - ${chatOpen ? 320 : 0}px)`
       }}
     >
-      <div className="flex items-center justify-between h-16 px-4 md:px-6">
-        {/* Left Section */}
+            <div className="flex items-center justify-between h-16 px-4 md:px-6">
+        {/* Left Section - Sidebar Controls */}
         <div className="flex items-center space-x-2 md:space-x-4">
           {/* Mobile Menu Button */}
           <Button
@@ -75,15 +78,18 @@ const TopBar: React.FC<TopBarProps> = ({
             {mobileSidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </Button>
 
-          {/* Desktop Menu Button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onToggleSidebar}
-            className="hidden md:block lg:hidden"
-          >
-            <Menu className="h-5 w-5" />
-          </Button>
+          {/* Desktop Sidebar Toggle Button - Only show when sidebar is collapsed */}
+          {sidebarCollapsed && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onToggleSidebar}
+              className="hidden md:block text-gray-400 hover:text-white hover:bg-white/10"
+              title="Expand Sidebar"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </Button>
+          )}
 
           {/* Search - Hidden on mobile */}
           <div className="relative hidden md:block">
@@ -96,28 +102,54 @@ const TopBar: React.FC<TopBarProps> = ({
           </div>
         </div>
 
-        {/* Right Section */}
-        <div className="flex items-center space-x-2 md:space-x-3">
+        {/* Center Section - Currency Selector and Wallet */}
+        <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center space-x-3">
           {isAuthenticated && user ? (
             <>
-              {/* Balance Dropdown - Hidden on mobile */}
-              <div className="hidden md:block">
-                <BalanceDropdown 
-                  isOpen={showBalance}
-                  onToggle={() => setShowBalance(!showBalance)}
-                />
-              </div>
+              {/* Currency Selector */}
+              <TopBarCurrencySelector
+                selectedCurrency={selectedCurrency}
+                onCurrencyChange={setSelectedCurrency}
+                className="hidden md:flex"
+              />
 
-              {/* Wallet Button - Hidden on mobile */}
+              {/* Wallet Button */}
               <Button
                 variant="default"
                 size="sm"
                 onClick={() => setWalletModal(true)}
-                className="hidden md:block bg-[#00d4ff] hover:bg-[#00d4ff]/90 hover:shadow-[#00d4ff]/30 text-black font-semibold transition-all duration-200"
+                className="hidden md:block bg-blue-600 hover:bg-blue-700 text-white font-semibold transition-all duration-200"
               >
                 Wallet
               </Button>
+            </>
+          ) : (
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setAuthModal(true)}
+                className="text-gray-300 hidden sm:block"
+              >
+                Sign In
+              </Button>
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => setAuthModal(true)}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs md:text-sm px-2 md:px-4"
+              >
+                <span className="hidden sm:block">Sign Up</span>
+                <span className="sm:hidden">Join</span>
+              </Button>
+            </div>
+          )}
+        </div>
 
+        {/* Right Section - Other Controls */}
+        <div className="flex items-center space-x-2 md:space-x-3">
+          {isAuthenticated && user ? (
+            <>
               {/* Notifications Dropdown - Hidden on mobile */}
               <div className="hidden md:block">
                 <NotificationsDropdown 
@@ -134,27 +166,7 @@ const TopBar: React.FC<TopBarProps> = ({
                 />
               </div>
             </>
-          ) : (
-            <div className="flex items-center space-x-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setAuthModal(true)}
-                className="text-gray-300 hidden sm:block"
-              >
-                Sign In
-              </Button>
-              <Button
-                variant="default"
-                size="sm"
-                onClick={() => setAuthModal(true)}
-                className="bg-[#00d4ff] hover:bg-[#00d4ff]/90 text-black font-semibold text-xs md:text-sm px-2 md:px-4"
-              >
-                <span className="hidden sm:block">Sign Up</span>
-                <span className="sm:hidden">Join</span>
-              </Button>
-            </div>
-          )}
+          ) : null}
 
           {/* Chat Toggle */}
           <Button
@@ -163,11 +175,22 @@ const TopBar: React.FC<TopBarProps> = ({
             onClick={onToggleChat}
             className={`transition-all duration-200 ${
               chatOpen || mobileChatOpen
-                ? "bg-[#00d4ff] text-black hover:shadow-[#00d4ff]/30" 
-                : "hover:bg-[#00d4ff]/10"
+                ? "bg-blue-600 text-white hover:bg-blue-700" 
+                : "hover:bg-white/10"
             }`}
           >
             {mobileChatOpen ? <X className="h-5 w-5" /> : <MessageCircle className="h-5 w-5" />}
+          </Button>
+
+          {/* Live Stats Toggle */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setLiveStatsModal(true)}
+            className="text-gray-400 hover:text-blue-400 hover:bg-white/10 transition-all duration-200"
+            title="Live Stats"
+          >
+            <BarChart3 className="h-5 w-5" />
           </Button>
         </div>
       </div>

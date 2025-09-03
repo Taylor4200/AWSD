@@ -1,22 +1,27 @@
 'use client'
 
-import React, { useState } from 'react'
-import { motion } from 'framer-motion'
+import React, { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { 
-  Wallet, 
-  CreditCard, 
-  Banknote, 
-  Bitcoin, 
-  Plus, 
+  X,
+  Eye,
+  EyeOff,
+  RefreshCw,
+  Plus,
   Minus,
-  ArrowRight,
+  Wallet,
+  Coins,
+  DollarSign,
+  TrendingUp,
+  TrendingDown,
+  Clock,
   Check,
-  X
+  AlertCircle,
+  Info
 } from 'lucide-react'
-import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
+import { Input } from '@/components/ui/Input'
 import { useUserStore } from '@/store/userStore'
 import { formatCurrency } from '@/lib/utils'
 
@@ -25,290 +30,535 @@ interface WalletModalProps {
   onClose: () => void
 }
 
+interface Transaction {
+  id: string
+  type: 'deposit' | 'withdrawal' | 'win' | 'bet' | 'bonus' | 'promotion'
+  amount: number
+  currency: 'GC' | 'SC'
+  status: 'pending' | 'completed' | 'failed'
+  description: string
+  time: Date
+  balanceAfter: number
+}
+
 const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose }) => {
   const { user } = useUserStore()
-  const [activeTab, setActiveTab] = useState<'overview' | 'deposit' | 'withdraw'>('overview')
-  const [amount, setAmount] = useState('')
-  const [selectedMethod, setSelectedMethod] = useState<string>('')
+  const [showBalances, setShowBalances] = useState(true)
+  const [activeTab, setActiveTab] = useState<'overview' | 'deposit' | 'withdraw' | 'history' | 'packages'>('overview')
+  const [depositAmount, setDepositAmount] = useState('')
+  const [withdrawAmount, setWithdrawAmount] = useState('')
+  const [selectedCurrency, setSelectedCurrency] = useState<'GC' | 'SC'>('SC')
 
-  const paymentMethods = [
-    { id: 'credit-card', name: 'Credit Card', icon: CreditCard, fee: '2.5%', time: 'Instant' },
-    { id: 'bank-transfer', name: 'Bank Transfer', icon: Banknote, fee: '0%', time: '1-3 days' },
-    { id: 'crypto', name: 'Cryptocurrency', icon: Bitcoin, fee: '0%', time: 'Instant' }
+  // Purchase packages with GC and "free" SC
+  const purchasePackages = [
+    {
+      id: 'starter',
+      name: 'Starter Pack',
+      price: 10,
+      gcAmount: 10000,
+      scAmount: 10.25,
+      popular: false
+    },
+    {
+      id: 'bronze',
+      name: 'Bronze Pack',
+      price: 25,
+      gcAmount: 25000,
+      scAmount: 25.75,
+      popular: false
+    },
+    {
+      id: 'silver',
+      name: 'Silver Pack',
+      price: 50,
+      gcAmount: 50000,
+      scAmount: 51.50,
+      popular: true
+    },
+    {
+      id: 'gold',
+      name: 'Gold Pack',
+      price: 100,
+      gcAmount: 100000,
+      scAmount: 102.50,
+      popular: false
+    },
+    {
+      id: 'platinum',
+      name: 'Platinum Pack',
+      price: 250,
+      gcAmount: 250000,
+      scAmount: 256.25,
+      popular: false
+    },
+    {
+      id: 'diamond',
+      name: 'Diamond Pack',
+      price: 500,
+      gcAmount: 500000,
+      scAmount: 512.50,
+      popular: false
+    }
   ]
+  const [transactions, setTransactions] = useState<Transaction[]>([
+    {
+      id: '1',
+      type: 'win',
+      amount: 2400.00,
+      currency: 'SC',
+      status: 'completed',
+      description: 'Win on Sweet Bonanza',
+      time: new Date(Date.now() - 1000 * 60 * 6),
+      balanceAfter: 7400.00
+    },
+    {
+      id: '2',
+      type: 'bet',
+      amount: -100.00,
+      currency: 'SC',
+      status: 'completed',
+      description: 'Bet on Sweet Bonanza',
+      time: new Date(Date.now() - 1000 * 60 * 11),
+      balanceAfter: 5000.00
+    },
+    {
+      id: '3',
+      type: 'deposit',
+      amount: 500.00,
+      currency: 'SC',
+      status: 'completed',
+      description: 'Deposit via Credit Card',
+      time: new Date(Date.now() - 1000 * 60 * 60),
+      balanceAfter: 5100.00
+    },
+    {
+      id: '4',
+      type: 'bonus',
+      amount: 1000.00,
+      currency: 'GC',
+      status: 'completed',
+      description: 'Welcome Bonus',
+      time: new Date(Date.now() - 1000 * 60 * 60 * 2),
+      balanceAfter: 1000.00
+    }
+  ])
+
+  const formatTime = (date: Date) => {
+    const now = new Date()
+    const diff = now.getTime() - date.getTime()
+    const minutes = Math.floor(diff / (1000 * 60))
+    const hours = Math.floor(diff / (1000 * 60 * 60))
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+
+    if (minutes < 1) return 'Just now'
+    if (minutes < 60) return `${minutes}m ago`
+    if (hours < 24) return `${hours}h ago`
+    return `${days}d ago`
+  }
+
+  const getTransactionIcon = (type: string) => {
+    switch (type) {
+      case 'win':
+        return <TrendingUp className="h-4 w-4 text-green-400" />
+      case 'bet':
+        return <TrendingDown className="h-4 w-4 text-red-400" />
+      case 'deposit':
+        return <Plus className="h-4 w-4 text-blue-400" />
+      case 'withdrawal':
+        return <Minus className="h-4 w-4 text-orange-400" />
+      case 'bonus':
+      case 'promotion':
+        return <Coins className="h-4 w-4 text-yellow-400" />
+      default:
+        return <DollarSign className="h-4 w-4 text-gray-400" />
+    }
+  }
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return 'text-green-400'
+      case 'pending':
+        return 'text-yellow-400'
+      case 'failed':
+        return 'text-red-400'
+      default:
+        return 'text-gray-400'
+    }
+  }
 
   const handleDeposit = () => {
-    if (!amount || !selectedMethod) return
-    console.log('Processing deposit:', { amount, method: selectedMethod })
-    setAmount('')
-    setSelectedMethod('')
-    setActiveTab('overview')
+    const amount = parseFloat(depositAmount)
+    if (amount > 0) {
+      const newTransaction: Transaction = {
+        id: Date.now().toString(),
+        type: 'deposit',
+        amount,
+        currency: selectedCurrency,
+        status: 'completed',
+        description: `Deposit ${selectedCurrency}`,
+        time: new Date(),
+        balanceAfter: (user?.balance || 0) + amount
+      }
+      setTransactions(prev => [newTransaction, ...prev])
+      setDepositAmount('')
+    }
   }
 
   const handleWithdraw = () => {
-    if (!amount || !selectedMethod) return
-    console.log('Processing withdrawal:', { amount, method: selectedMethod })
-    setAmount('')
-    setSelectedMethod('')
-    setActiveTab('overview')
+    const amount = parseFloat(withdrawAmount)
+    if (amount > 0 && amount <= (user?.balance || 0)) {
+      const newTransaction: Transaction = {
+        id: Date.now().toString(),
+        type: 'withdrawal',
+        amount: -amount,
+        currency: selectedCurrency,
+        status: 'pending',
+        description: `Withdrawal ${selectedCurrency}`,
+        time: new Date(),
+        balanceAfter: (user?.balance || 0) - amount
+      }
+      setTransactions(prev => [newTransaction, ...prev])
+      setWithdrawAmount('')
+    }
   }
 
+  if (!isOpen) return null
+
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Wallet"
-      description="Manage your deposits and withdrawals"
-      size="lg"
-      variant="glass"
-    >
-      <div className="space-y-6">
-        {/* Wallet Overview */}
-        <div className="text-center p-6 bg-gradient-to-r from-[#00d4ff]/20 to-purple-600/20 rounded-xl border border-[#00d4ff]/30">
-          <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-[#00d4ff] to-purple-500 rounded-full flex items-center justify-center">
-            <Wallet className="h-8 w-8 text-white" />
-          </div>
-          <h3 className="text-2xl font-bold text-white mb-2">Your Wallet</h3>
-          <div className="text-3xl font-bold text-[#00d4ff] mb-2">
-            {formatCurrency(user?.balance || 0, 'USD')}
-          </div>
-          <p className="text-gray-400 text-sm">
-            Available for deposits and withdrawals
-          </p>
-        </div>
-
-        {/* Tabs */}
-        <div className="flex space-x-1 bg-[#1a2c38] rounded-lg p-1">
-          {[
-            { id: 'overview', label: 'Overview', icon: Wallet },
-            { id: 'deposit', label: 'Deposit', icon: Plus },
-            { id: 'withdraw', label: 'Withdraw', icon: Minus }
-          ].map((tab) => (
-            <Button
-              key={tab.id}
-              variant={activeTab === tab.id ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`flex-1 ${
-                activeTab === tab.id 
-                  ? 'bg-[#00d4ff] text-black' 
-                  : 'text-gray-400 hover:text-white'
-              }`}
-            >
-              <tab.icon className="h-4 w-4 mr-2" />
-              {tab.label}
-            </Button>
-          ))}
-        </div>
-
-        {/* Tab Content */}
-        {activeTab === 'overview' && (
-          <div className="space-y-4">
-            {/* Quick Actions */}
-            <div className="grid grid-cols-2 gap-3">
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
+      >
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.8, y: 20 }}
+          className="bg-[#1a2c38] rounded-lg w-full max-w-2xl max-h-[90vh] overflow-hidden"
+        >
+          {/* Header */}
+          <div className="bg-[#2d3748] p-6 flex items-center justify-between">
+            <h2 className="text-2xl font-bold text-white">Wallet</h2>
+            <div className="flex items-center space-x-4">
               <Button
-                variant="default"
-                onClick={() => setActiveTab('deposit')}
-                className="bg-[#00d4ff] text-black hover:bg-[#00d4ff]/90"
+                variant="outline"
+                size="sm"
+                onClick={() => setShowBalances(!showBalances)}
+                className="text-gray-400 border-gray-400 hover:bg-gray-400 hover:text-black"
               >
-                <Plus className="h-4 w-4 mr-2" />
-                Deposit
+                {showBalances ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onClose}
+                className="text-white border-white hover:bg-white hover:text-black"
+              >
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Balance Cards */}
+          <div className="p-6 border-b border-[#374151]">
+            <div className="grid grid-cols-2 gap-4">
+              <Card className="bg-[#2d3748] border-[#374151]">
+                <CardContent className="p-4">
+                  <div className="text-center">
+                    <div className="text-sm text-gray-400 mb-1">Balance</div>
+                    <div className="text-2xl font-bold text-[#00d4ff]">
+                      {showBalances ? formatCurrency(user?.balance || 0) : '••••••'}
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">Sweeps Coins (SC)</div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="bg-[#2d3748] border-[#374151]">
+                <CardContent className="p-4">
+                  <div className="text-center">
+                    <div className="text-sm text-gray-400 mb-1">SC Balance</div>
+                    <div className="text-2xl font-bold text-purple-400">
+                      {showBalances ? `${user?.gcBalance || 0} GC` : '••••••'}
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">Gold Coins (GC)</div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="p-6 border-b border-[#374151]">
+            <div className="grid grid-cols-3 gap-4">
+              <Button
+                onClick={() => setActiveTab('packages')}
+                className="bg-[#00d4ff] text-black hover:bg-[#00d4ff]/90 text-lg font-semibold py-3"
+              >
+                <Plus className="h-5 w-5 mr-2" />
+                Buy Packages
               </Button>
               <Button
                 variant="outline"
                 onClick={() => setActiveTab('withdraw')}
-                className="border-[#2d3748] hover:border-[#00d4ff]"
+                className="border-[#00d4ff] text-[#00d4ff] hover:bg-[#00d4ff] hover:text-black text-lg font-semibold py-3"
               >
-                <Minus className="h-4 w-4 mr-2" />
-                Withdraw
+                <Minus className="h-5 w-5 mr-2" />
+                Redeem SC
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setActiveTab('history')}
+                className="border-gray-400 text-gray-400 hover:bg-gray-400 hover:text-black text-lg font-semibold py-3"
+              >
+                <Clock className="h-5 w-5 mr-2" />
+                History
               </Button>
             </div>
+          </div>
 
-            {/* Payment Methods */}
-            <Card variant="glass" className="border-[#2d3748]">
-              <CardHeader>
-                <CardTitle className="text-white">Payment Methods</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {paymentMethods.map((method) => (
-                    <div key={method.id} className="flex items-center justify-between p-3 bg-black/20 rounded-lg">
+          {/* Content Tabs */}
+          <div className="flex-1 overflow-hidden">
+            {activeTab === 'overview' && (
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-white">Recent Transactions</h3>
+                  <Button
+                    variant="ghost"
+                    onClick={() => setActiveTab('history')}
+                    className="text-[#00d4ff] hover:text-[#00d4ff]/80"
+                  >
+                    View All
+                  </Button>
+                </div>
+                
+                <div className="space-y-3 max-h-64 overflow-y-auto">
+                  {transactions.slice(0, 5).map((transaction) => (
+                    <div key={transaction.id} className="flex items-center justify-between p-3 bg-[#2d3748] rounded-lg">
                       <div className="flex items-center space-x-3">
-                        <method.icon className="h-5 w-5 text-[#00d4ff]" />
+                        {getTransactionIcon(transaction.type)}
                         <div>
-                          <div className="text-white font-medium">{method.name}</div>
-                          <div className="text-xs text-gray-400">
-                            Fee: {method.fee} • Time: {method.time}
-                          </div>
+                          <div className="text-white font-medium">{transaction.description}</div>
+                          <div className="text-xs text-gray-400">{formatTime(transaction.time)}</div>
                         </div>
                       </div>
-                      <Button variant="ghost" size="sm" className="text-[#00d4ff]">
-                        <ArrowRight className="h-4 w-4" />
+                      <div className="text-right">
+                        <div className={`font-medium ${transaction.amount >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                          {transaction.amount >= 0 ? '+' : ''}{formatCurrency(transaction.amount)} {transaction.currency}
+                        </div>
+                        <div className={`text-xs ${getStatusColor(transaction.status)}`}>
+                          {transaction.status}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'packages' && (
+              <div className="p-6">
+                <h3 className="text-lg font-semibold text-white mb-4">Purchase Packages</h3>
+                
+                <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 mb-6">
+                  <div className="flex items-start space-x-2">
+                    <Info className="h-4 w-4 text-blue-400 mt-0.5 flex-shrink-0" />
+                    <div className="text-sm text-blue-400">
+                      <strong>Important:</strong> Gold Coins (GC) are for entertainment only and cannot be redeemed for prizes. 
+                      Sweeps Coins (SC) can be redeemed for prizes once you meet the minimum requirements. 
+                      All purchases include both GC and "free" SC as part of our sweepstakes model.
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {purchasePackages.map((pkg) => (
+                    <Card key={pkg.id} className="bg-[#2d3748] border-[#374151] hover:border-[#00d4ff]/50 transition-colors">
+                      <CardContent className="p-4">
+                        <div className="text-center">
+                          {pkg.popular && (
+                            <div className="bg-[#00d4ff] text-black text-xs font-bold px-2 py-1 rounded-full mb-2 inline-block">
+                              MOST POPULAR
+                            </div>
+                          )}
+                          <h4 className="text-lg font-bold text-white mb-2">{pkg.name}</h4>
+                          <div className="text-2xl font-bold text-[#00d4ff] mb-4">${pkg.price}</div>
+                          
+                          <div className="space-y-2 mb-4">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm text-gray-400">Gold Coins:</span>
+                              <span className="text-sm font-medium text-purple-400">{pkg.gcAmount.toLocaleString()} GC</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm text-gray-400">Sweeps Coins:</span>
+                              <span className="text-sm font-medium text-[#00d4ff]">{pkg.scAmount} SC</span>
+                            </div>
+                          </div>
+                          
+                          <Button
+                            onClick={() => {
+                              // Simulate purchase
+                              const newTransaction: Transaction = {
+                                id: Date.now().toString(),
+                                type: 'deposit',
+                                amount: pkg.scAmount,
+                                currency: 'SC',
+                                status: 'completed',
+                                description: `Package Purchase: ${pkg.name}`,
+                                time: new Date(),
+                                balanceAfter: (user?.balance || 0) + pkg.scAmount
+                              }
+                              setTransactions(prev => [newTransaction, ...prev])
+                            }}
+                            className="w-full bg-[#00d4ff] text-black hover:bg-[#00d4ff]/90"
+                          >
+                            Purchase Package
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+              <div className="p-6">
+                <h3 className="text-lg font-semibold text-white mb-4">Deposit Funds</h3>
+                
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm text-gray-400 mb-2 block">Currency</label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Button
+                        variant={selectedCurrency === 'SC' ? 'default' : 'outline'}
+                        onClick={() => setSelectedCurrency('SC')}
+                        className={selectedCurrency === 'SC' ? 'bg-[#00d4ff] text-black' : ''}
+                      >
+                        Sweeps Coins (SC)
+                      </Button>
+                      <Button
+                        variant={selectedCurrency === 'GC' ? 'default' : 'outline'}
+                        onClick={() => setSelectedCurrency('GC')}
+                        className={selectedCurrency === 'GC' ? 'bg-[#00d4ff] text-black' : ''}
+                      >
+                        Gold Coins (GC)
                       </Button>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
+                  </div>
 
-        {activeTab === 'deposit' && (
-          <div className="space-y-4">
-            <Card variant="glass" className="border-[#2d3748] p-6">
-              <h4 className="text-lg font-bold text-white mb-4">Deposit Funds</h4>
-              
-              <div className="space-y-4">
-                <Input
-                  type="number"
-                  placeholder="Enter amount"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  className="text-center text-xl"
-                />
+                  <div>
+                    <label className="text-sm text-gray-400 mb-2 block">Amount</label>
+                    <Input
+                      type="number"
+                      value={depositAmount}
+                      onChange={(e) => setDepositAmount(e.target.value)}
+                      placeholder="Enter amount"
+                      className="bg-[#2d3748] border-[#374151] text-white"
+                    />
+                  </div>
+
+                  <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3">
+                    <div className="flex items-start space-x-2">
+                      <AlertCircle className="h-4 w-4 text-yellow-400 mt-0.5 flex-shrink-0" />
+                      <div className="text-xs text-yellow-400">
+                        <strong>Important:</strong> GC (Gold Coins) are for entertainment only and cannot be redeemed for prizes. 
+                        SC (Sweeps Coins) can be redeemed for prizes once you meet the minimum requirements.
+                      </div>
+                    </div>
+                  </div>
+
+                  <Button
+                    onClick={handleDeposit}
+                    disabled={!depositAmount || parseFloat(depositAmount) <= 0}
+                    className="w-full bg-[#00d4ff] text-black hover:bg-[#00d4ff]/90"
+                  >
+                    Deposit {selectedCurrency}
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'withdraw' && (
+              <div className="p-6">
+                <h3 className="text-lg font-semibold text-white mb-4">Redeem Sweeps Coins</h3>
                 
-                <div className="grid grid-cols-4 gap-2">
-                  {['25', '50', '100', '500'].map((preset) => (
-                    <Button
-                      key={preset}
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setAmount(preset)}
-                      className="border-[#2d3748]"
-                    >
-                      ${preset}
-                    </Button>
-                  ))}
-                </div>
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm text-gray-400 mb-2 block">Amount to Redeem</label>
+                    <Input
+                      type="number"
+                      value={withdrawAmount}
+                      onChange={(e) => setWithdrawAmount(e.target.value)}
+                      placeholder="Enter amount"
+                      className="bg-[#2d3748] border-[#374151] text-white"
+                    />
+                  </div>
 
-                <div className="space-y-3">
-                  <h5 className="text-sm font-medium text-white">Select Payment Method</h5>
-                  {paymentMethods.map((method) => (
-                    <div
-                      key={method.id}
-                      className={`flex items-center justify-between p-3 rounded-lg border-2 cursor-pointer transition-colors ${
-                        selectedMethod === method.id 
-                          ? 'border-[#00d4ff] bg-[#00d4ff]/10' 
-                          : 'border-[#2d3748] bg-black/20 hover:border-[#00d4ff]/50'
-                      }`}
-                      onClick={() => setSelectedMethod(method.id)}
-                    >
+                  <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
+                    <div className="flex items-start space-x-2">
+                      <Check className="h-4 w-4 text-blue-400 mt-0.5 flex-shrink-0" />
+                      <div className="text-xs text-blue-400">
+                        <strong>Note:</strong> Only Sweeps Coins (SC) can be redeemed for prizes. Gold Coins (GC) are for entertainment only.
+                        Minimum redemption amount: $10 SC
+                      </div>
+                    </div>
+                  </div>
+
+                  <Button
+                    onClick={handleWithdraw}
+                    disabled={!withdrawAmount || parseFloat(withdrawAmount) < 10 || parseFloat(withdrawAmount) > (user?.balance || 0)}
+                    className="w-full bg-[#00d4ff] text-black hover:bg-[#00d4ff]/90"
+                  >
+                    Redeem SC
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'history' && (
+              <div className="p-6">
+                <h3 className="text-lg font-semibold text-white mb-4">Transaction History</h3>
+                
+                <div className="space-y-3 max-h-96 overflow-y-auto">
+                  {transactions.map((transaction) => (
+                    <div key={transaction.id} className="flex items-center justify-between p-3 bg-[#2d3748] rounded-lg">
                       <div className="flex items-center space-x-3">
-                        <method.icon className="h-5 w-5 text-[#00d4ff]" />
+                        {getTransactionIcon(transaction.type)}
                         <div>
-                          <div className="text-white font-medium">{method.name}</div>
-                          <div className="text-xs text-gray-400">
-                            Fee: {method.fee} • Time: {method.time}
-                          </div>
+                          <div className="text-white font-medium">{transaction.description}</div>
+                          <div className="text-xs text-gray-400">{formatTime(transaction.time)}</div>
                         </div>
                       </div>
-                      {selectedMethod === method.id && (
-                        <Check className="h-5 w-5 text-[#00d4ff]" />
-                      )}
+                      <div className="text-right">
+                        <div className={`font-medium ${transaction.amount >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                          {transaction.amount >= 0 ? '+' : ''}{formatCurrency(transaction.amount)} {transaction.currency}
+                        </div>
+                        <div className={`text-xs ${getStatusColor(transaction.status)}`}>
+                          {transaction.status}
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>
-                
-                <Button
-                  variant="default"
-                  size="lg"
-                  onClick={handleDeposit}
-                  disabled={!amount || !selectedMethod || parseFloat(amount) <= 0}
-                  className="w-full bg-[#00d4ff] text-black hover:bg-[#00d4ff]/90"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Deposit ${amount || '0'}
-                </Button>
               </div>
-            </Card>
+            )}
           </div>
-        )}
 
-        {activeTab === 'withdraw' && (
-          <div className="space-y-4">
-            <Card variant="glass" className="border-[#2d3748] p-6">
-              <h4 className="text-lg font-bold text-white mb-4">Withdraw Funds</h4>
-              
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-3 bg-black/20 rounded-lg">
-                  <span className="text-gray-400">Available Balance:</span>
-                  <span className="text-white font-bold">
-                    {formatCurrency(user?.balance || 0, 'USD')}
-                  </span>
-                </div>
-                
-                <Input
-                  type="number"
-                  placeholder="Enter amount"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  className="text-center text-xl"
-                />
-                
-                <div className="grid grid-cols-4 gap-2">
-                  {['25', '50', '100', 'Max'].map((preset) => (
-                    <Button
-                      key={preset}
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        if (preset === 'Max') {
-                          setAmount((user?.balance || 0).toString())
-                        } else {
-                          setAmount(preset)
-                        }
-                      }}
-                      className="border-[#2d3748]"
-                    >
-                      {preset === 'Max' ? preset : `$${preset}`}
-                    </Button>
-                  ))}
-                </div>
-
-                <div className="space-y-3">
-                  <h5 className="text-sm font-medium text-white">Select Withdrawal Method</h5>
-                  {paymentMethods.map((method) => (
-                    <div
-                      key={method.id}
-                      className={`flex items-center justify-between p-3 rounded-lg border-2 cursor-pointer transition-colors ${
-                        selectedMethod === method.id 
-                          ? 'border-[#00d4ff] bg-[#00d4ff]/10' 
-                          : 'border-[#2d3748] bg-black/20 hover:border-[#00d4ff]/50'
-                      }`}
-                      onClick={() => setSelectedMethod(method.id)}
-                    >
-                      <div className="flex items-center space-x-3">
-                        <method.icon className="h-5 w-5 text-[#00d4ff]" />
-                        <div>
-                          <div className="text-white font-medium">{method.name}</div>
-                          <div className="text-xs text-gray-400">
-                            Fee: {method.fee} • Time: {method.time}
-                          </div>
-                        </div>
-                      </div>
-                      {selectedMethod === method.id && (
-                        <Check className="h-5 w-5 text-[#00d4ff]" />
-                      )}
-                    </div>
-                  ))}
-                </div>
-                
-                <Button
-                  variant="default"
-                  size="lg"
-                  onClick={handleWithdraw}
-                  disabled={!amount || !selectedMethod || parseFloat(amount) <= 0 || parseFloat(amount) > (user?.balance || 0)}
-                  className="w-full bg-green-600 hover:bg-green-700"
-                >
-                  <Minus className="h-4 w-4 mr-2" />
-                  Withdraw ${amount || '0'}
-                </Button>
-              </div>
-            </Card>
+          {/* Footer */}
+          <div className="p-6 border-t border-[#374151] text-center">
+            <Button
+              variant="outline"
+              onClick={onClose}
+              className="text-[#00d4ff] border-[#00d4ff] hover:bg-[#00d4ff] hover:text-black"
+            >
+              <Wallet className="h-4 w-4 mr-2" />
+              Open Wallet
+            </Button>
           </div>
-        )}
-      </div>
-    </Modal>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
   )
 }
 

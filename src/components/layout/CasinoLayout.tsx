@@ -8,6 +8,9 @@ import TopBar from './TopBar'
 import LegalFooter from './LegalFooter'
 import WalletModal from '@/components/modals/WalletModal'
 import LiveSupportWidget from '@/components/ui/LiveSupportWidget'
+import LiveStatsModal from '@/components/ui/LiveStatsModal'
+import MyBetsModal from '@/components/ui/MyBetsModal'
+import BetHistoryScroll from '@/components/ui/BetHistoryScroll'
 import UserStatsModal from '@/components/modals/UserStatsModal'
 import { useUIStore } from '@/store/uiStore'
 
@@ -25,7 +28,7 @@ const CasinoLayout: React.FC<CasinoLayoutProps> = ({ children }) => {
     isOpen: false,
     user: null
   })
-  const { showWalletModal, setWalletModal } = useUIStore()
+  const { showWalletModal, setWalletModal, showLiveStatsModal, setLiveStatsModal, showMyBetsModal, setMyBetsModal, showBetHistoryScroll, setBetHistoryScroll } = useUIStore()
 
   // Check if mobile on mount
   useEffect(() => {
@@ -36,6 +39,21 @@ const CasinoLayout: React.FC<CasinoLayoutProps> = ({ children }) => {
     window.addEventListener('resize', checkMobile)
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
+
+  // Keyboard shortcut for toggling sidebar (Ctrl/Cmd + B)
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key === 'b') {
+        event.preventDefault()
+        if (!isMobile) {
+          setSidebarCollapsed(!sidebarCollapsed)
+        }
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [sidebarCollapsed, isMobile])
 
   const handleShowUserStats = (user: any) => {
     setUserStatsModal({ isOpen: true, user })
@@ -180,6 +198,25 @@ const CasinoLayout: React.FC<CasinoLayoutProps> = ({ children }) => {
 
       {/* Live Support Widget */}
       <LiveSupportWidget />
+
+      {/* Live Stats Modal */}
+      <LiveStatsModal
+        isOpen={showLiveStatsModal}
+        onClose={() => setLiveStatsModal(false)}
+        gameType="All"
+      />
+
+      {/* My Bets Modal */}
+      <MyBetsModal
+        isOpen={showMyBetsModal}
+        onClose={() => setMyBetsModal(false)}
+      />
+
+      {/* Bet History Scroll */}
+      <BetHistoryScroll
+        isOpen={showBetHistoryScroll}
+        onClose={() => setBetHistoryScroll(false)}
+      />
     </div>
   )
 }
