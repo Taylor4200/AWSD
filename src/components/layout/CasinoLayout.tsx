@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import Sidebar from './Sidebar'
 import ChatSidebar from './ChatSidebar'
 import TopBar from './TopBar'
@@ -17,7 +17,9 @@ interface CasinoLayoutProps {
 
 const CasinoLayout: React.FC<CasinoLayoutProps> = ({ children }) => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
-  const [chatOpen, setChatOpen] = useState(true)
+  const [chatOpen, setChatOpen] = useState(false) // Default closed on mobile
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
+  const [mobileChatOpen, setMobileChatOpen] = useState(false)
   const [userStatsModal, setUserStatsModal] = useState<{ isOpen: boolean; user: any }>({
     isOpen: false,
     user: null
@@ -32,40 +34,118 @@ const CasinoLayout: React.FC<CasinoLayoutProps> = ({ children }) => {
     setUserStatsModal({ isOpen: false, user: null })
   }
 
+  const handleToggleSidebar = () => {
+    if (window.innerWidth < 768) {
+      setMobileSidebarOpen(!mobileSidebarOpen)
+      setMobileChatOpen(false) // Close chat when opening sidebar
+    } else {
+      setSidebarCollapsed(!sidebarCollapsed)
+    }
+  }
+
+  const handleToggleChat = () => {
+    if (window.innerWidth < 768) {
+      setMobileChatOpen(!mobileChatOpen)
+      setMobileSidebarOpen(false) // Close sidebar when opening chat
+    } else {
+      setChatOpen(!chatOpen)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-[#0f1419] text-white overflow-hidden">
-      {/* Left Sidebar */}
-      <Sidebar 
-        collapsed={sidebarCollapsed}
-        onCollapse={setSidebarCollapsed}
-      />
+      {/* Mobile Overlay */}
+      <AnimatePresence>
+        {(mobileSidebarOpen || mobileChatOpen) && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-40 md:hidden"
+            onClick={() => {
+              setMobileSidebarOpen(false)
+              setMobileChatOpen(false)
+            }}
+          />
+        )}
+      </AnimatePresence>
 
-      {/* Right Chat Sidebar */}
-      <ChatSidebar
-        isOpen={chatOpen}
-        onToggle={() => setChatOpen(!chatOpen)}
-        collapsed={false}
-        onShowUserStats={handleShowUserStats}
-      />
+      {/* Left Sidebar - Desktop */}
+      <div className="hidden md:block">
+        <Sidebar 
+          collapsed={sidebarCollapsed}
+          onCollapse={setSidebarCollapsed}
+        />
+      </div>
+
+      {/* Left Sidebar - Mobile */}
+      <AnimatePresence>
+        {mobileSidebarOpen && (
+          <motion.div
+            initial={{ x: -280 }}
+            animate={{ x: 0 }}
+            exit={{ x: -280 }}
+            className="fixed left-0 top-0 h-full w-70 bg-dark-200 border-r border-white/10 z-50 md:hidden"
+          >
+            <Sidebar 
+              collapsed={false}
+              onCollapse={() => setMobileSidebarOpen(false)}
+              isMobile={true}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Right Chat Sidebar - Desktop */}
+      <div className="hidden md:block">
+        <ChatSidebar
+          isOpen={chatOpen}
+          onToggle={() => setChatOpen(!chatOpen)}
+          collapsed={false}
+          onShowUserStats={handleShowUserStats}
+        />
+      </div>
+
+      {/* Right Chat Sidebar - Mobile */}
+      <AnimatePresence>
+        {mobileChatOpen && (
+          <motion.div
+            initial={{ x: 320 }}
+            animate={{ x: 0 }}
+            exit={{ x: 320 }}
+            className="fixed right-0 top-0 h-full w-80 bg-dark-200 border-l border-white/10 z-50 md:hidden"
+          >
+            <ChatSidebar
+              isOpen={true}
+              onToggle={() => setMobileChatOpen(false)}
+              collapsed={false}
+              onShowUserStats={handleShowUserStats}
+              isMobile={true}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Top Bar */}
       <TopBar 
-        onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
-        onToggleChat={() => setChatOpen(!chatOpen)}
+        onToggleSidebar={handleToggleSidebar}
+        onToggleChat={handleToggleChat}
         sidebarCollapsed={sidebarCollapsed}
         chatOpen={chatOpen}
+        mobileSidebarOpen={mobileSidebarOpen}
+        mobileChatOpen={mobileChatOpen}
       />
 
       {/* Main Content */}
       <motion.main
-        className="transition-all duration-300 pt-16"
+        className="transition-all duration-300 pt-16 md:pt-16"
         style={{
-          marginLeft: sidebarCollapsed ? 64 : 240,
-          marginRight: chatOpen ? 320 : 0,
+          marginLeft: window.innerWidth >= 768 ? (sidebarCollapsed ? 64 : 240) : 0,
+          marginRight: window.innerWidth >= 768 ? (chatOpen ? 320 : 0) : 0,
         }}
       >
         <div className="min-h-screen flex flex-col">
-          <div className="flex-1">
+          <div className="flex-1 px-4 md:px-6">
             {children}
           </div>
           <LegalFooter />
@@ -88,7 +168,7 @@ const CasinoLayout: React.FC<CasinoLayoutProps> = ({ children }) => {
       )}
 
       {/* Live Support Widget */}
-      <LiveSupportWidget chatOpen={chatOpen} />
+      <LiveSupportWidget chatOpen={chatOpen || mobileChatOpen} />
     </div>
   )
 }

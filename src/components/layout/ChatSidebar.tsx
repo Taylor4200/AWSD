@@ -37,9 +37,10 @@ interface ChatSidebarProps {
   onToggle: () => void
   collapsed?: boolean
   onShowUserStats?: (user: any) => void
+  isMobile?: boolean
 }
 
-const ChatSidebar: React.FC<ChatSidebarProps> = ({ isOpen, onToggle, collapsed = false, onShowUserStats }) => {
+const ChatSidebar: React.FC<ChatSidebarProps> = ({ isOpen, onToggle, collapsed = false, onShowUserStats, isMobile = false }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: '1',
@@ -268,11 +269,11 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ isOpen, onToggle, collapsed =
       <motion.div
         initial={false}
         animate={{ 
-          width: collapsed ? 64 : 320,
+          width: collapsed ? 64 : (isMobile ? 320 : 320),
           opacity: isOpen ? 1 : 0.7
         }}
         transition={{ duration: 0.3, ease: 'easeInOut' }}
-        className="fixed right-0 top-0 h-full bg-[#1a2c38] border-l border-[#2d3748] z-30 flex flex-col"
+        className={`${isMobile ? 'w-80' : ''} fixed right-0 top-0 h-full bg-[#1a2c38] border-l border-[#2d3748] z-30 flex flex-col`}
       >
         {/* Header */}
         <div className="p-4 border-b border-[#2d3748] flex items-center justify-between">

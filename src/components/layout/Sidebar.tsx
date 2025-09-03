@@ -25,9 +25,10 @@ import { cn } from '@/lib/utils'
 interface SidebarProps {
   collapsed?: boolean
   onCollapse?: (collapsed: boolean) => void
+  isMobile?: boolean
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ collapsed = false, onCollapse }) => {
+const Sidebar: React.FC<SidebarProps> = ({ collapsed = false, onCollapse, isMobile = false }) => {
   const pathname = usePathname()
   
   const navItems = [
@@ -53,7 +54,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed = false, onCollapse }) => {
       initial={false}
       animate={{ width: collapsed ? 64 : 240 }}
       transition={{ duration: 0.3, ease: 'easeInOut' }}
-      className="fixed left-0 top-0 h-full bg-[#1a2c38] border-r border-[#2d3748] z-30 flex flex-col"
+      className={`${isMobile ? 'w-70' : ''} fixed left-0 top-0 h-full bg-[#1a2c38] border-r border-[#2d3748] z-30 flex flex-col`}
     >
       {/* Logo */}
       <div className="p-4 border-b border-[#2d3748]">
