@@ -39,7 +39,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed = false, onCollapse, isMobi
     { icon: Star, label: 'Favorites', href: '/favorites' },
     { icon: Gift, label: 'Promotions', href: '/promotions', badge: 'NEW' },
     { icon: Trophy, label: 'VIP Club', href: '/vip' },
-    { icon: Users, label: 'Refer & Earn', href: '/referrals' },
+            { icon: Users, label: 'Refer', href: '/referrals', badge: 'EARN' },
     { icon: Target, label: 'Challenges', href: '/challenges' },
     { icon: Crown, label: 'Rewards', href: '/rewards' },
   ]
@@ -109,11 +109,15 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed = false, onCollapse, isMobi
                       </span>
                     )}
                     
-                    {item.badge && (
-                      <span className="ml-auto text-xs bg-[#00d4ff] text-black px-2 py-1 rounded-full font-bold">
-                        {item.badge}
-                      </span>
-                    )}
+                                         {item.badge && (
+                       <span className={`ml-auto text-xs px-2 py-1 rounded-full font-bold ${
+                         item.badge === 'EARN' 
+                           ? 'bg-green-500 text-black' 
+                           : 'bg-[#00d4ff] text-black'
+                       }`}>
+                         {item.badge}
+                       </span>
+                     )}
                   </>
                 )}
 
