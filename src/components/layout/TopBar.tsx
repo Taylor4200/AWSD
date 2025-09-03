@@ -103,14 +103,14 @@ const TopBar: React.FC<TopBarProps> = ({
         </div>
 
         {/* Center Section - Currency Selector and Wallet */}
-        <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center space-x-3">
+        <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center space-x-2 md:space-x-3">
           {isAuthenticated && user ? (
             <>
               {/* Currency Selector */}
               <TopBarCurrencySelector
                 selectedCurrency={selectedCurrency}
                 onCurrencyChange={setSelectedCurrency}
-                className="hidden md:flex"
+                className="flex"
               />
 
               {/* Wallet Button */}
@@ -118,9 +118,10 @@ const TopBar: React.FC<TopBarProps> = ({
                 variant="default"
                 size="sm"
                 onClick={() => setWalletModal(true)}
-                className="hidden md:block bg-blue-600 hover:bg-blue-700 text-white font-semibold transition-all duration-200"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold transition-all duration-200 text-xs md:text-sm px-2 md:px-4"
               >
-                Wallet
+                <span className="hidden sm:block">Wallet</span>
+                <span className="sm:hidden">$$</span>
               </Button>
             </>
           ) : (
