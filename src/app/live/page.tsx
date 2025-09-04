@@ -20,6 +20,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
+import GameCard from '@/components/ui/GameCard'
 import CasinoLayout from '@/components/layout/CasinoLayout'
 import { formatCurrency } from '@/lib/utils'
 
@@ -36,6 +37,18 @@ interface LiveGame {
   thumbnail: string
   language: string
   tableLimit: string
+  provider: string
+  category: 'casino' | 'originals' | 'slots' | 'crash' | 'dice' | 'roulette' | 'blackjack' | 'baccarat' | 'poker'
+  image: string
+  isExclusive?: boolean
+  isNew?: boolean
+  isFeatured?: boolean
+  tags?: string[]
+  recentWin?: number
+  popularity?: number
+  rtp?: number
+  volatility?: 'low' | 'medium' | 'high'
+  jackpot?: number
 }
 
 const LivePage: React.FC = () => {
@@ -64,7 +77,10 @@ const LivePage: React.FC = () => {
       isHot: true,
       thumbnail: '/api/placeholder/300/200',
       language: 'English',
-      tableLimit: '€2000'
+      tableLimit: '€2000',
+      provider: 'Evolution Gaming',
+      category: 'roulette',
+      image: '/images/games/lightning-roulette.jpg'
     },
     {
       id: '2',
@@ -78,7 +94,10 @@ const LivePage: React.FC = () => {
       isHot: true,
       thumbnail: '/api/placeholder/300/200',
       language: 'English',
-      tableLimit: '€5000'
+      tableLimit: '€5000',
+      provider: 'Evolution Gaming',
+      category: 'blackjack',
+      image: '/images/games/blackjack-vip.jpg'
     },
     {
       id: '3',
@@ -92,7 +111,10 @@ const LivePage: React.FC = () => {
       isHot: false,
       thumbnail: '/api/placeholder/300/200',
       language: 'English',
-      tableLimit: '€1000'
+      tableLimit: '€1000',
+      provider: 'Evolution Gaming',
+      category: 'baccarat',
+      image: '/images/games/speed-baccarat.jpg'
     },
     {
       id: '4',
@@ -106,7 +128,10 @@ const LivePage: React.FC = () => {
       isHot: true,
       thumbnail: '/api/placeholder/300/200',
       language: 'English',
-      tableLimit: '€500'
+      tableLimit: '€500',
+      provider: 'Evolution Gaming',
+      category: 'casino',
+      image: '/images/games/crazy-time.jpg'
     },
     {
       id: '5',
@@ -120,7 +145,10 @@ const LivePage: React.FC = () => {
       isHot: false,
       thumbnail: '/api/placeholder/300/200',
       language: 'English',
-      tableLimit: '€2000'
+      tableLimit: '€2000',
+      provider: 'Evolution Gaming',
+      category: 'poker',
+      image: '/images/games/three-card-poker.jpg'
     },
     {
       id: '6',
@@ -134,7 +162,10 @@ const LivePage: React.FC = () => {
       isHot: false,
       thumbnail: '/api/placeholder/300/200',
       language: 'English',
-      tableLimit: '€1000'
+      tableLimit: '€1000',
+      provider: 'Evolution Gaming',
+      category: 'roulette',
+      image: '/images/games/auto-roulette.jpg'
     }
   ]
 
@@ -284,87 +315,11 @@ const LivePage: React.FC = () => {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 whileHover={{ scale: 1.02 }}
-                className="group"
               >
-                <Card variant="glass" className="border-[#2d3748] overflow-hidden cursor-pointer hover:border-[#00d4ff]/50 transition-colors">
-                  <div className="relative">
-                    <div className="aspect-video bg-gradient-to-br from-[#1a2c38] to-[#2d3748] flex items-center justify-center">
-                      <div className="text-center">
-                        <div className="text-4xl mb-2">{getGameIcon(game.type)}</div>
-                        <div className="text-sm text-gray-400">{game.name}</div>
-                      </div>
-                    </div>
-                    
-                    {/* Live Indicator */}
-                    <div className="absolute top-2 left-2 flex items-center space-x-1 bg-red-500 text-white px-2 py-1 rounded-full text-xs">
-                      <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                      LIVE
-                    </div>
-                    
-                    {/* Hot Badge */}
-                    {game.isHot && (
-                      <div className="absolute top-2 right-2 bg-orange-500 text-white px-2 py-1 rounded-full text-xs">
-                        HOT
-                      </div>
-                    )}
-                    
-                    {/* Favorite Button */}
-                    <button className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Heart className={`h-4 w-4 ${game.isFavorite ? 'fill-red-500 text-red-500' : ''}`} />
-                    </button>
-                  </div>
-                  
-                  <CardContent className="p-4">
-                    <div className="space-y-3">
-                      {/* Game Info */}
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          {getGameIcon(game.type)}
-                          <span className="text-sm font-medium">{game.name}</span>
-                        </div>
-                        <span className="text-xs text-gray-400">{game.language}</span>
-                      </div>
-                      
-                      {/* Dealer Info */}
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-400">Dealer:</span>
-                        <span className="text-white">{game.dealer}</span>
-                      </div>
-                      
-                      {/* Players */}
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-400">Players:</span>
-                        <div className="flex items-center space-x-1">
-                          <Users className="h-3 w-3 text-green-400" />
-                          <span className="text-white">{game.players}</span>
-                        </div>
-                      </div>
-                      
-                      {/* Bet Limits */}
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-400">Bet Range:</span>
-                        <span className="text-white">
-                          {formatCurrency(game.minBet)} - {formatCurrency(game.maxBet)}
-                        </span>
-                      </div>
-                      
-                      {/* Table Limit */}
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-400">Table Limit:</span>
-                        <span className="text-white">{game.tableLimit}</span>
-                      </div>
-                      
-                      {/* Play Button */}
-                      <Button
-                        className="w-full bg-[#00d4ff] text-black hover:bg-[#00d4ff]/90 mt-3"
-                        size="sm"
-                      >
-                        <Play className="h-4 w-4 mr-2" />
-                        Join Table
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                <GameCard 
+                  game={game} 
+                  variant="compact"
+                />
               </motion.div>
             ))}
           </div>

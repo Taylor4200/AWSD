@@ -16,18 +16,28 @@ import CasinoLayout from '@/components/layout/CasinoLayout'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import GameCard from '@/components/ui/GameCard'
 import { formatNumber } from '@/lib/utils'
 
 interface Game {
   id: string
   name: string
   provider: string
-  category: string
+  category: 'casino' | 'originals' | 'slots' | 'crash' | 'dice' | 'roulette' | 'blackjack' | 'baccarat' | 'poker'
   players: number
   rtp: number
   isNew?: boolean
   isHot?: boolean
   isExclusive?: boolean
+  image: string
+  isFeatured?: boolean
+  tags?: string[]
+  recentWin?: number
+  popularity?: number
+  volatility?: 'low' | 'medium' | 'high'
+  minBet?: number
+  maxBet?: number
+  jackpot?: number
 }
 
 export default function CasinoPage() {
@@ -51,7 +61,8 @@ export default function CasinoPage() {
       category: 'slots',
       players: 1247,
       rtp: 96.51,
-      isHot: true
+      isHot: true,
+      image: '/Sweet1000.avif'
     },
     {
       id: '2',
@@ -60,7 +71,8 @@ export default function CasinoPage() {
       category: 'slots',
       players: 892,
       rtp: 96.50,
-      isHot: true
+      isHot: true,
+      image: '/images/games/gates-of-olympus.jpg'
     },
     {
       id: '3',
@@ -68,32 +80,36 @@ export default function CasinoPage() {
       provider: 'Play\'n GO',
       category: 'slots',
       players: 634,
-      rtp: 94.25
+      rtp: 94.25,
+      image: '/images/games/book-of-dead.jpg'
     },
     {
       id: '4',
       name: 'Lightning Roulette',
       provider: 'Evolution Gaming',
-      category: 'live',
+      category: 'roulette',
       players: 445,
       rtp: 97.30,
-      isNew: true
+      isNew: true,
+      image: '/images/games/lightning-roulette.jpg'
     },
     {
       id: '5',
       name: 'Blackjack Classic',
       provider: 'NetEnt',
-      category: 'table',
+      category: 'blackjack',
       players: 234,
-      rtp: 99.28
+      rtp: 99.28,
+      image: '/images/games/blackjack-classic.jpg'
     },
     {
       id: '6',
       name: 'Mega Moolah',
       provider: 'Microgaming',
-      category: 'jackpots',
+      category: 'slots',
       players: 567,
-      rtp: 88.12
+      rtp: 88.12,
+      image: '/images/games/mega-moolah.jpg'
     }
   ]
 
@@ -162,238 +178,11 @@ export default function CasinoPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
               whileHover={{ scale: 1.05 }}
-              className="group cursor-pointer"
             >
-              <Card variant="glass" className="overflow-hidden border-[#2d3748] hover:border-[#00d4ff]/50 transition-all">
-                <div className="relative aspect-[3/2] bg-gradient-to-br from-gray-800 to-gray-900 overflow-hidden">
-                  {/* Game Image Placeholder */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 to-purple-900/20" />
-
-                  {/* Enhanced Game-specific visual elements */}
-                  {game.name === 'Sweet Bonanza' && (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="relative">
-                        <motion.div
-                          className="text-3xl filter drop-shadow-lg"
-                          animate={{ scale: [1, 1.05, 1] }}
-                          transition={{ duration: 2, repeat: Infinity }}
-                        >
-                          🍬
-                        </motion.div>
-                        <div className="absolute inset-0 bg-gradient-to-br from-pink-400/15 via-yellow-400/10 to-transparent" />
-                        <motion.div
-                          className="absolute top-2 right-2 text-lg text-yellow-400"
-                          animate={{ rotate: [0, 360] }}
-                          transition={{ duration: 3, repeat: Infinity }}
-                        >
-                          ✨
-                        </motion.div>
-                        <motion.div
-                          className="absolute bottom-2 left-2 text-sm text-pink-400"
-                          animate={{ opacity: [0.3, 1, 0.3] }}
-                          transition={{ duration: 2, repeat: Infinity }}
-                        >
-                          🍭
-                        </motion.div>
-                      </div>
-                    </div>
-                  )}
-
-                  {game.name === 'Gates of Olympus' && (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="relative">
-                        <motion.div
-                          className="text-3xl filter drop-shadow-lg"
-                          animate={{ scale: [1, 1.1, 1] }}
-                          transition={{ duration: 2.5, repeat: Infinity }}
-                        >
-                          ⚡
-                        </motion.div>
-                        <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/20 via-purple-500/15 to-transparent" />
-                        <motion.div
-                          className="absolute top-3 right-3 text-lg text-purple-400"
-                          animate={{ rotate: [0, -360] }}
-                          transition={{ duration: 4, repeat: Infinity }}
-                        >
-                          🏛️
-                        </motion.div>
-                        <motion.div
-                          className="absolute bottom-2 left-2 text-xs text-yellow-400 font-bold"
-                          animate={{ opacity: [0.5, 1, 0.5] }}
-                          transition={{ duration: 1.5, repeat: Infinity }}
-                        >
-                          ZEUS
-                        </motion.div>
-                      </div>
-                    </div>
-                  )}
-
-                  {game.name === 'Book of Dead' && (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="relative">
-                        <motion.div
-                          className="text-3xl filter drop-shadow-lg"
-                          animate={{ scale: [1, 1.05, 1] }}
-                          transition={{ duration: 2, repeat: Infinity }}
-                        >
-                          📜
-                        </motion.div>
-                        <div className="absolute inset-0 bg-gradient-to-br from-amber-600/20 via-orange-500/15 to-transparent" />
-                        <motion.div
-                          className="absolute top-2 left-2 text-lg text-amber-400"
-                          animate={{ opacity: [0.3, 1, 0.3] }}
-                          transition={{ duration: 2, repeat: Infinity }}
-                        >
-                          🏺
-                        </motion.div>
-                        <motion.div
-                          className="absolute bottom-2 right-2 text-sm text-orange-400"
-                          animate={{ opacity: [0.3, 1, 0.3] }}
-                          transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
-                        >
-                          👑
-                        </motion.div>
-                      </div>
-                    </div>
-                  )}
-
-                  {game.name === 'Lightning Roulette' && (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="relative">
-                        <motion.div
-                          className="text-3xl filter drop-shadow-lg"
-                          animate={{ scale: [1, 1.1, 1] }}
-                          transition={{ duration: 1.8, repeat: Infinity }}
-                        >
-                          ⚡
-                        </motion.div>
-                        <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/25 via-blue-500/20 to-transparent" />
-                        <motion.div
-                          className="absolute top-3 left-3 text-lg text-blue-400"
-                          animate={{ rotate: [0, 360] }}
-                          transition={{ duration: 3, repeat: Infinity }}
-                        >
-                          🎰
-                        </motion.div>
-
-                      </div>
-                    </div>
-                  )}
-
-                  {game.name === 'Blackjack Classic' && (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="relative">
-                        <div className="flex space-x-1">
-                          <motion.div
-                            className="w-6 h-8 bg-red-600 rounded border-2 border-white/50 flex items-center justify-center text-white text-xs font-bold"
-                            animate={{ rotate: [0, 2, -2, 0] }}
-                            transition={{ duration: 3, repeat: Infinity }}
-                          >
-                            A♠
-                          </motion.div>
-                          <motion.div
-                            className="w-6 h-8 bg-black rounded border-2 border-white/50 flex items-center justify-center text-white text-xs font-bold"
-                            animate={{ rotate: [0, -2, 2, 0] }}
-                            transition={{ duration: 3, repeat: Infinity, delay: 0.2 }}
-                          >
-                            K♥
-                          </motion.div>
-                        </div>
-                        <div className="absolute inset-0 bg-gradient-to-br from-green-600/15 via-gray-600/10 to-transparent" />
-
-                      </div>
-                    </div>
-                  )}
-
-                  {game.name === 'Mega Moolah' && (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="relative">
-                        <motion.div
-                          className="text-3xl filter drop-shadow-lg"
-                          animate={{ scale: [1, 1.1, 1] }}
-                          transition={{ duration: 2, repeat: Infinity }}
-                        >
-                          🦁
-                        </motion.div>
-                        <div className="absolute inset-0 bg-gradient-to-br from-orange-500/25 via-yellow-500/20 to-transparent" />
-                        <motion.div
-                          className="absolute top-2 right-2 text-lg text-yellow-400"
-                          animate={{ rotate: [0, 360] }}
-                          transition={{ duration: 3, repeat: Infinity }}
-                        >
-                          💰
-                        </motion.div>
-
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Animated background particles */}
-                  <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                    {[...Array(4)].map((_, i) => (
-                      <motion.div
-                        key={i}
-                        className="absolute w-1 h-1 bg-white/15 rounded-full"
-                        style={{
-                          left: `${15 + i * 20}%`,
-                          top: `${25 + i * 15}%`,
-                        }}
-                        animate={{
-                          y: [0, -12, 0],
-                          opacity: [0.2, 0.5, 0.2],
-                          scale: [1, 1.3, 1],
-                        }}
-                        transition={{
-                          duration: 3.5,
-                          repeat: Infinity,
-                          delay: i * 0.7,
-                        }}
-                      />
-                    ))}
-                  </div>
-                  
-                  {/* Badges */}
-                  <div className="absolute top-2 left-2 flex flex-col space-y-1">
-                    {game.isExclusive && (
-                      <span className="bg-[#00d4ff] text-black text-xs px-2 py-1 rounded-full font-bold">
-                        EXCLUSIVE
-                      </span>
-                    )}
-                    {game.isNew && (
-                      <span className="bg-green-500 text-white text-xs px-2 py-1 rounded-full font-bold">
-                        NEW
-                      </span>
-                    )}
-                    {game.isHot && (
-                      <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold">
-                        HOT
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Play Button Overlay */}
-                  <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button variant="default" size="lg" className="bg-[#00d4ff] text-black">
-                      <Play className="h-5 w-5 mr-2" />
-                      PLAY
-                    </Button>
-                  </div>
-
-                  {/* Player Count */}
-                  <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded-full flex items-center">
-                    <Users className="h-3 w-3 mr-1 text-green-400" />
-                    {formatNumber(game.players)}
-                  </div>
-                </div>
-
-                <CardContent className="p-3">
-                  <h3 className="font-bold text-white text-sm mb-1 truncate">
-                    {game.name}
-                  </h3>
-                  <p className="text-xs text-gray-400 truncate mb-1">{game.provider}</p>
-                  <p className="text-xs text-green-400">RTP: {game.rtp}%</p>
-                </CardContent>
-              </Card>
+              <GameCard 
+                game={game} 
+                variant="compact"
+              />
             </motion.div>
           ))}
         </div>

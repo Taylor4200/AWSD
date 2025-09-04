@@ -14,6 +14,7 @@ import Link from 'next/link'
 import CasinoLayout from '@/components/layout/CasinoLayout'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
+import GameCard from '@/components/ui/GameCard'
 import { formatNumber } from '@/lib/utils'
 
 interface OriginalGame {
@@ -21,73 +22,113 @@ interface OriginalGame {
   name: string
   description: string
   players: number
-  category: string
+  category: 'casino' | 'originals' | 'slots' | 'crash' | 'dice' | 'roulette' | 'blackjack' | 'baccarat' | 'poker'
   href?: string
   isPopular?: boolean
   isNew?: boolean
+  provider: string
+  image: string
+  isExclusive?: boolean
+  isHot?: boolean
+  isFeatured?: boolean
+  tags?: string[]
+  recentWin?: number
+  popularity?: number
+  rtp?: number
+  volatility?: 'low' | 'medium' | 'high'
+  minBet?: number
+  maxBet?: number
+  jackpot?: number
 }
 
 export default function OriginalsPage() {
   const games: OriginalGame[] = [
     {
-      id: '1',
+      id: 'dice',
       name: 'DICE',
       description: 'Classic dice game with provably fair results',
       players: 2068,
-      category: 'Classic',
+      category: 'dice',
       href: '/originals/dice',
-      isPopular: true
+      isPopular: true,
+      isHot: true,
+      isExclusive: true,
+      provider: 'EDGE ORIGINALS',
+      image: '/Dice.avif'
     },
     {
-      id: '2',
-      name: 'CRASH',
+      id: 'edge-crash',
+      name: 'EDGE Crash',
       description: 'Watch the multiplier rise and cash out before it crashes',
       players: 1547,
-      category: 'Multiplier',
-      isPopular: true
+      category: 'crash',
+      isPopular: true,
+      isHot: true,
+      isExclusive: true,
+      provider: 'EDGE ORIGINALS',
+      image: '/images/games/edge-crash.jpg'
     },
     {
-      id: '3',
-      name: 'PLINKO',
-      description: 'Drop the ball and watch it bounce to victory',
+      id: 'edge-dice',
+      name: 'EDGE Dice',
+      description: 'Classic dice game with EDGE twist',
       players: 892,
-      category: 'Arcade'
+      category: 'dice',
+      isExclusive: true,
+      provider: 'EDGE ORIGINALS',
+      image: '/images/games/edge-dice.jpg'
     },
     {
-      id: '4',
-      name: 'MINES',
-      description: 'Navigate the minefield to find hidden treasures',
+      id: 'edge-roulette',
+      name: 'EDGE Roulette',
+      description: 'European roulette with enhanced graphics',
       players: 634,
-      category: 'Strategy'
+      category: 'roulette',
+      isExclusive: true,
+      provider: 'EDGE ORIGINALS',
+      image: '/images/games/edge-roulette.jpg'
     },
     {
-      id: '5',
-      name: 'KENO',
-      description: 'Pick your lucky numbers and win big',
+      id: 'edge-blackjack',
+      name: 'EDGE Blackjack',
+      description: 'Beat the dealer in our classic blackjack game',
       players: 1047,
-      category: 'Lottery'
+      category: 'blackjack',
+      isExclusive: true,
+      provider: 'EDGE ORIGINALS',
+      image: '/images/games/edge-blackjack.jpg'
     },
     {
-      id: '6',
-      name: 'WHEEL',
-      description: 'Spin the wheel of fortune',
+      id: 'neon-crash',
+      name: 'Neon Crash',
+      description: 'Watch the multiplier grow and cash out before it crashes',
       players: 445,
-      category: 'Wheel',
-      isNew: true
+      category: 'crash',
+      isHot: true,
+      isExclusive: true,
+      provider: 'EDGE ORIGINALS',
+      image: '/images/games/neon-crash.jpg'
     },
     {
-      id: '7',
-      name: 'HILO',
-      description: 'Guess if the next card is higher or lower',
+      id: 'cyber-slots',
+      name: 'Cyber Slots',
+      description: 'Futuristic slot machine with cyberpunk aesthetics',
       players: 321,
-      category: 'Cards'
+      category: 'slots',
+      isNew: true,
+      isExclusive: true,
+      provider: 'EDGE ORIGINALS',
+      image: '/images/games/cyber-slots.jpg'
     },
     {
-      id: '8',
-      name: 'LIMBO',
-      description: 'How low can you go? Beat the target number',
+      id: 'quantum-dice',
+      name: 'Quantum Dice',
+      description: 'Quantum mechanics meets classic dice game',
       players: 567,
-      category: 'Classic'
+      category: 'dice',
+      isExclusive: true,
+      provider: 'EDGE ORIGINALS',
+      image: '/images/games/quantum-dice.jpg'
     }
   ]
 
@@ -189,206 +230,11 @@ export default function OriginalsPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              whileHover={{ scale: 1.05 }}
-              className="group cursor-pointer"
             >
-              {game.href ? (
-                <Link href={game.href}>
-                  <Card variant="glass" className="overflow-hidden border-[#2d3748] hover:border-[#00d4ff]/50 transition-all h-full">
-                    <div className="relative aspect-video bg-gradient-to-br from-gray-800 to-gray-900 overflow-hidden">
-                      {/* Game Visual */}
-                      <div className="absolute inset-0 bg-gradient-to-br from-blue-900/30 to-purple-900/30 flex items-center justify-center">
-                        <div className="text-6xl font-bold text-white/20">
-                          {game.name.charAt(0)}
-                        </div>
-                      </div>
-
-                      {/* Enhanced Game-specific visual elements */}
-                      {game.name === 'DICE' && (
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="relative">
-                            <div className="grid grid-cols-3 gap-3">
-                              {[...Array(9)].map((_, i) => (
-                                <motion.div
-                                  key={i}
-                                  className={`w-6 h-6 rounded-full ${[0,2,4,6,8].includes(i) ? 'bg-[#00d4ff]' : 'bg-[#00d4ff]/40'} border-2 border-[#00d4ff]/60`}
-                                  animate={{ scale: [1, 1.2, 1] }}
-                                  transition={{ duration: 2, repeat: Infinity, delay: i * 0.1 }}
-                                />
-                              ))}
-                            </div>
-                            <div className="absolute inset-0 bg-gradient-to-t from-[#00d4ff]/15 to-transparent" />
-                            <motion.div
-                              className="absolute top-4 right-4 text-lg text-cyan-400"
-                              animate={{ rotate: [0, 360] }}
-                              transition={{ duration: 4, repeat: Infinity }}
-                            >
-                              🎲
-                            </motion.div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Animated background particles */}
-                      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                        {[...Array(6)].map((_, i) => (
-                          <motion.div
-                            key={i}
-                            className="absolute w-1.5 h-1.5 bg-white/20 rounded-full"
-                            style={{
-                              left: `${10 + i * 15}%`,
-                              top: `${15 + i * 12}%`,
-                            }}
-                            animate={{
-                              y: [0, -20, 0],
-                              opacity: [0.3, 0.7, 0.3],
-                              scale: [1, 1.5, 1],
-                            }}
-                            transition={{
-                              duration: 4,
-                              repeat: Infinity,
-                              delay: i * 0.8,
-                            }}
-                          />
-                        ))}
-                      </div>
-                      
-                      {/* Badges */}
-                      <div className="absolute top-3 left-3 flex flex-col space-y-1">
-                        <span className="bg-[#00d4ff] text-black text-xs px-2 py-1 rounded-full font-bold">
-                          EXCLUSIVE
-                        </span>
-                        {game.isPopular && (
-                          <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold">
-                            POPULAR
-                          </span>
-                        )}
-                        {game.isNew && (
-                          <span className="bg-green-500 text-white text-xs px-2 py-1 rounded-full font-bold">
-                            NEW
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Play Button Overlay */}
-                      <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button variant="default" size="lg" className="bg-[#00d4ff] text-black">
-                          <Play className="h-5 w-5 mr-2" />
-                          PLAY NOW
-                        </Button>
-                      </div>
-
-                      {/* Player Count */}
-                      <div className="absolute bottom-3 right-3 bg-black/70 text-white text-xs px-2 py-1 rounded-full flex items-center">
-                        <Users className="h-3 w-3 mr-1 text-green-400" />
-                        {formatNumber(game.players)}
-                      </div>
-                    </div>
-
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className="font-bold text-white text-lg">
-                          {game.name}
-                        </h3>
-                        <span className="text-xs text-gray-400 bg-gray-700 px-2 py-1 rounded">
-                          {game.category}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-400 mb-3">
-                        {game.description}
-                      </p>
-                      <div className="flex items-center justify-between text-xs text-gray-500">
-                        <span>Provably Fair</span>
-                        <span>1% House Edge</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ) : (
-                <Card variant="glass" className="overflow-hidden border-[#2d3748] hover:border-[#00d4ff]/50 transition-all h-full">
-                  <div className="relative aspect-video bg-gradient-to-br from-gray-800 to-gray-900 overflow-hidden">
-                    {/* Game Visual */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-blue-900/30 to-purple-900/30 flex items-center justify-center">
-                      <div className="text-6xl font-bold text-white/20">
-                        {game.name.charAt(0)}
-                      </div>
-                    </div>
-
-                    {/* Animated background particles */}
-                    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                      {[...Array(6)].map((_, i) => (
-                        <motion.div
-                          key={i}
-                          className="absolute w-1.5 h-1.5 bg-white/20 rounded-full"
-                          style={{
-                            left: `${10 + i * 15}%`,
-                            top: `${15 + i * 12}%`,
-                          }}
-                          animate={{
-                            y: [0, -20, 0],
-                            opacity: [0.3, 0.7, 0.3],
-                            scale: [1, 1.5, 1],
-                          }}
-                          transition={{
-                            duration: 4,
-                            repeat: Infinity,
-                            delay: i * 0.8,
-                          }}
-                        />
-                      ))}
-                    </div>
-                    
-                    {/* Badges */}
-                    <div className="absolute top-3 left-3 flex flex-col space-y-1">
-                      <span className="bg-[#00d4ff] text-black text-xs px-2 py-1 rounded-full font-bold">
-                        EXCLUSIVE
-                      </span>
-                      {game.isPopular && (
-                        <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold">
-                          POPULAR
-                        </span>
-                      )}
-                      {game.isNew && (
-                        <span className="bg-green-500 text-white text-xs px-2 py-1 rounded-full font-bold">
-                          NEW
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Play Button Overlay */}
-                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button variant="default" size="lg" className="bg-[#00d4ff] text-black">
-                        <Play className="h-5 w-5 mr-2" />
-                        PLAY NOW
-                      </Button>
-                    </div>
-
-                    {/* Player Count */}
-                    <div className="absolute bottom-3 right-3 bg-black/70 text-white text-xs px-2 py-1 rounded-full flex items-center">
-                      <Users className="h-3 w-3 mr-1 text-green-400" />
-                      {formatNumber(game.players)}
-                    </div>
-                  </div>
-
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-bold text-white text-lg">
-                        {game.name}
-                      </h3>
-                      <span className="text-xs text-gray-400 bg-gray-700 px-2 py-1 rounded">
-                        {game.category}
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-400 mb-3">
-                      {game.description}
-                    </p>
-                    <div className="flex items-center justify-between text-xs text-gray-500">
-                      <span>Provably Fair</span>
-                      <span>1% House Edge</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+              <GameCard 
+                game={game} 
+                variant="compact"
+              />
             </motion.div>
           ))}
         </div>

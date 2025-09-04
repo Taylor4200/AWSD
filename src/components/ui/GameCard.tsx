@@ -102,14 +102,7 @@ const GameCard: React.FC<GameCardProps> = ({ game, variant = 'default', onClick,
             <Users className="h-3 w-3 mr-1 text-green-400" />
             {formatNumber(game.players || 0)}
           </div>
-        </div>
-
-        <div className="p-3">
-          <h3 className="font-bold text-white text-sm mb-1 truncate">
-            {game.name}
-          </h3>
-          <p className="text-xs text-gray-400 truncate">{game.provider}</p>
-        </div>
+                </div>
       </motion.div>
     )
   }
@@ -269,37 +262,6 @@ const GameCard: React.FC<GameCardProps> = ({ game, variant = 'default', onClick,
         <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded-full flex items-center">
           <Users className="h-3 w-3 mr-1 text-green-400" />
           {formatNumber(game.players || 0)}
-        </div>
-      </div>
-
-      <div className="p-3">
-        <h3 className="font-bold text-white text-sm mb-1 truncate">
-          {game.name}
-        </h3>
-        <p className="text-xs text-gray-400 truncate">{game.provider}</p>
-        
-        {/* Game Stats */}
-        <div className="mt-2 space-y-1">
-          {game.rtp && (
-            <div className="flex justify-between items-center text-xs">
-              <span className="text-gray-400">RTP</span>
-              <span className="text-green-400 font-semibold">{game.rtp}%</span>
-            </div>
-          )}
-          {game.volatility && (
-            <div className="flex justify-between items-center text-xs">
-              <span className="text-gray-400">Volatility</span>
-              <span className={`font-semibold ${getVolatilityColor(game.volatility)}`}>
-                {game.volatility.toUpperCase()}
-              </span>
-            </div>
-          )}
-          {game.popularity && (
-            <div className="flex justify-between items-center text-xs">
-              <span className="text-gray-400">Popularity</span>
-              <span className="text-blue-400 font-semibold">{game.popularity}%</span>
-            </div>
-          )}
         </div>
       </div>
     </motion.div>
