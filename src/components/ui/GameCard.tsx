@@ -198,9 +198,6 @@ const GameCard: React.FC<GameCardProps> = ({ game, variant = 'default', onClick,
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
             <h3 className="text-lg font-bold text-white mb-1">{game.name}</h3>
             <p className="text-sm text-gray-300 mb-2">{game.provider}</p>
-            {game.description && (
-              <p className="text-xs text-gray-400 line-clamp-2">{game.description}</p>
-            )}
           </div>
         </div>
       </motion.div>
