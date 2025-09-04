@@ -105,12 +105,6 @@ const MobileGameView: React.FC<MobileGameViewProps> = ({ game, onBack }) => {
                     <span className="text-yellow-400">${game.jackpot.toLocaleString()}</span>
                   </div>
                 )}
-                {game.description && (
-                  <div className="mt-3 pt-3 border-t border-[#374151]">
-                    <div className="text-gray-400 mb-1">Description:</div>
-                    <div className="text-white text-xs">{game.description}</div>
-                  </div>
-                )}
               </div>
             </div>
           </motion.div>

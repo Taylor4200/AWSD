@@ -144,7 +144,6 @@ const GameModal: React.FC<GameModalProps> = ({ game, isOpen, onClose }) => {
                       <div className="space-y-1 text-sm text-gray-300">
                         <div>Provider: {game.provider}</div>
                         <div>Category: {game.category}</div>
-                        {game.description && <div>Description: {game.description}</div>}
                       </div>
                     </div>
                     <div>
