@@ -6,7 +6,7 @@ import { Search, Filter, Users } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import GameCard from '@/components/ui/GameCard'
-import { games, getGamesByCategory, searchGames, getFeaturedGames, getExclusiveGames, getHotGames } from '@/lib/gameData'
+import { games, getGamesByCategory, searchGames, getFeaturedGames, getOriginalsGames, getHotGames } from '@/lib/gameData'
 
 const CasinoHome: React.FC = () => {
   const [activeFilter, setActiveFilter] = useState('featured') // Default to featured games
@@ -15,7 +15,7 @@ const CasinoHome: React.FC = () => {
   const categories = [
     { id: 'continue', name: 'Continue Playing', count: 0 },
     { id: 'featured', name: 'Featured Games', count: getFeaturedGames().length },
-    { id: 'originals', name: 'Originals', count: getExclusiveGames().length },
+    { id: 'originals', name: 'Originals', count: getOriginalsGames().length },
     { id: 'popular', name: 'Popular', count: getHotGames().length },
     { id: 'all', name: 'All Games', count: games.length },
   ]
@@ -25,7 +25,7 @@ const CasinoHome: React.FC = () => {
     : activeFilter === 'featured'
     ? getFeaturedGames()
     : activeFilter === 'originals'
-    ? getExclusiveGames()
+    ? getOriginalsGames()
     : activeFilter === 'popular'
     ? getHotGames()
     : activeFilter === 'continue'

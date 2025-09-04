@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { 
   User, 
@@ -24,16 +24,19 @@ import { Input } from '@/components/ui/Input'
 import { useUserStore } from '@/store/userStore'
 import Link from 'next/link'
 import CasinoLayout from '@/components/layout/CasinoLayout'
+import ChangePasswordModal from '@/components/modals/ChangePasswordModal'
 
 const SettingsPage = () => {
   const { user, toggleGhostMode } = useUserStore()
   const [activeTab, setActiveTab] = useState('profile')
-  const [profileData, setProfileData] = useState({
-    username: user?.username || '',
-    email: user?.email || '',
-    avatar: user?.avatar || ''
-  })
   const [theme, setTheme] = useState('dark')
+  const [memberSince, setMemberSince] = useState('')
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false)
+
+  useEffect(() => {
+    // Format date consistently on client side only
+    setMemberSince(new Date().toLocaleDateString())
+  }, [])
 
   const settingsTabs = [
     {
@@ -79,9 +82,9 @@ const SettingsPage = () => {
           <div className="flex items-center space-x-4">
             <div className="relative">
               <div className="w-20 h-20 rounded-full bg-gradient-to-r from-[#00d4ff] to-[#7c3aed] flex items-center justify-center">
-                {profileData.avatar ? (
+                {user?.avatar ? (
                   <img 
-                    src={profileData.avatar} 
+                    src={user.avatar} 
                     alt="Profile" 
                     className="w-full h-full rounded-full object-cover"
                   />
@@ -98,8 +101,8 @@ const SettingsPage = () => {
               </Button>
             </div>
             <div className="flex-1">
-              <h3 className="text-lg font-bold text-white">{profileData.username}</h3>
-              <p className="text-gray-400">Member since {new Date().toLocaleDateString()}</p>
+              <h3 className="text-lg font-bold text-white">{user?.username || user?.email?.split('@')[0] || 'User'}</h3>
+              <p className="text-gray-400">Member since {memberSince}</p>
             </div>
           </div>
 
@@ -107,24 +110,31 @@ const SettingsPage = () => {
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">Username</label>
               <Input
-                value={profileData.username}
-                onChange={(e) => setProfileData(prev => ({ ...prev, username: e.target.value }))}
-                className="bg-[#1a2c38] border-[#2d3748]"
+                value={user?.username || user?.email?.split('@')[0] || ''}
+                disabled
+                className="bg-[#1a2c38]/50 border-[#2d3748] text-gray-400 cursor-not-allowed"
+                placeholder="Username editing coming soon"
               />
+              <p className="text-xs text-gray-500 mt-1">Username editing will be available soon</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">Email</label>
               <Input
                 type="email"
-                value={profileData.email}
-                onChange={(e) => setProfileData(prev => ({ ...prev, email: e.target.value }))}
-                className="bg-[#1a2c38] border-[#2d3748]"
+                value={user?.email || ''}
+                disabled
+                className="bg-[#1a2c38]/50 border-[#2d3748] text-gray-400 cursor-not-allowed"
+                placeholder="Email"
               />
+              <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
             </div>
           </div>
 
           <div className="flex justify-end">
-            <Button className="bg-[#00d4ff] text-black hover:bg-[#00d4ff]/90">
+            <Button 
+              disabled 
+              className="bg-gray-600 text-gray-400 cursor-not-allowed"
+            >
               <Save className="h-4 w-4 mr-2" />
               Save Changes
             </Button>
@@ -153,7 +163,12 @@ const SettingsPage = () => {
                   <p className="text-sm text-gray-400">Last changed 30 days ago</p>
                 </div>
               </div>
-              <Button variant="outline" size="sm" className="border-[#2d3748]">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="border-[#2d3748]"
+                onClick={() => setIsChangePasswordOpen(true)}
+              >
                 Change Password
               </Button>
             </div>
@@ -386,16 +401,16 @@ const SettingsPage = () => {
                         <Button
                           variant="ghost"
                           onClick={() => setActiveTab(tab.id)}
-                          className={`w-full justify-start p-3 ${
+                          className={`w-full justify-start p-0 h-auto min-h-[50px] ${
                             activeTab === tab.id 
                               ? 'bg-[#00d4ff]/10 text-[#00d4ff] border-[#00d4ff]/20' 
                               : 'hover:bg-white/5'
                           }`}
                         >
-                          <tab.icon className="h-5 w-5 mr-3" />
-                          <div className="text-left">
-                            <div className="font-medium">{tab.label}</div>
-                            <div className="text-xs opacity-70">{tab.description}</div>
+                          <tab.icon className="h-5 w-5 mr-3 flex-shrink-0 mt-1" />
+                          <div className="text-left min-w-0 flex-1">
+                            <div className="font-medium mb-1">{tab.label}</div>
+                            <div className="text-xs opacity-70 leading-relaxed">{tab.description}</div>
                           </div>
                         </Button>
                       </motion.div>
@@ -419,6 +434,12 @@ const SettingsPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Change Password Modal */}
+      <ChangePasswordModal 
+        isOpen={isChangePasswordOpen}
+        onClose={() => setIsChangePasswordOpen(false)}
+      />
     </CasinoLayout>
   )
 }

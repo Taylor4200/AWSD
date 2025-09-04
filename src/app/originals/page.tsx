@@ -16,121 +16,17 @@ import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import GameCard from '@/components/ui/GameCard'
 import { formatNumber } from '@/lib/utils'
-
-interface OriginalGame {
-  id: string
-  name: string
-  description: string
-  players: number
-  category: 'casino' | 'originals' | 'slots' | 'crash' | 'dice' | 'roulette' | 'blackjack' | 'baccarat' | 'poker'
-  href?: string
-  isPopular?: boolean
-  isNew?: boolean
-  provider: string
-  image: string
-  isExclusive?: boolean
-  isHot?: boolean
-  isFeatured?: boolean
-  tags?: string[]
-  recentWin?: number
-  popularity?: number
-  rtp?: number
-  volatility?: 'low' | 'medium' | 'high'
-  minBet?: number
-  maxBet?: number
-  jackpot?: number
-}
+import { getOriginalsGames } from '@/lib/gameData'
+import type { Game } from '@/lib/gameData'
 
 export default function OriginalsPage() {
-  const games: OriginalGame[] = [
-    {
-      id: 'dice',
-      name: 'DICE',
-      description: 'Classic dice game with provably fair results',
-      players: 2068,
-      category: 'dice',
-      href: '/originals/dice',
-      isPopular: true,
-      isHot: true,
-      isExclusive: true,
-      provider: 'EDGE ORIGINALS',
-      image: '/Dice.avif'
-    },
-    {
-      id: 'edge-crash',
-      name: 'EDGE Crash',
-      description: 'Watch the multiplier rise and cash out before it crashes',
-      players: 1547,
-      category: 'crash',
-      isPopular: true,
-      isHot: true,
-      isExclusive: true,
-      provider: 'EDGE ORIGINALS',
-      image: '/images/games/edge-crash.jpg'
-    },
-    {
-      id: 'edge-dice',
-      name: 'EDGE Dice',
-      description: 'Classic dice game with EDGE twist',
-      players: 892,
-      category: 'dice',
-      isExclusive: true,
-      provider: 'EDGE ORIGINALS',
-      image: '/images/games/edge-dice.jpg'
-    },
-    {
-      id: 'edge-roulette',
-      name: 'EDGE Roulette',
-      description: 'European roulette with enhanced graphics',
-      players: 634,
-      category: 'roulette',
-      isExclusive: true,
-      provider: 'EDGE ORIGINALS',
-      image: '/images/games/edge-roulette.jpg'
-    },
-    {
-      id: 'edge-blackjack',
-      name: 'EDGE Blackjack',
-      description: 'Beat the dealer in our classic blackjack game',
-      players: 1047,
-      category: 'blackjack',
-      isExclusive: true,
-      provider: 'EDGE ORIGINALS',
-      image: '/images/games/edge-blackjack.jpg'
-    },
-    {
-      id: 'neon-crash',
-      name: 'Neon Crash',
-      description: 'Watch the multiplier grow and cash out before it crashes',
-      players: 445,
-      category: 'crash',
-      isHot: true,
-      isExclusive: true,
-      provider: 'EDGE ORIGINALS',
-      image: '/images/games/neon-crash.jpg'
-    },
-    {
-      id: 'cyber-slots',
-      name: 'Cyber Slots',
-      description: 'Futuristic slot machine with cyberpunk aesthetics',
-      players: 321,
-      category: 'slots',
-      isNew: true,
-      isExclusive: true,
-      provider: 'EDGE ORIGINALS',
-      image: '/images/games/cyber-slots.jpg'
-    },
-    {
-      id: 'quantum-dice',
-      name: 'Quantum Dice',
-      description: 'Quantum mechanics meets classic dice game',
-      players: 567,
-      category: 'dice',
-      isExclusive: true,
-      provider: 'EDGE ORIGINALS',
-      image: '/images/games/quantum-dice.jpg'
-    }
-  ]
+  // Get originals games from centralized data
+  const games = getOriginalsGames()
+
+  // Calculate stats from the games data
+  const totalPlayers = games.reduce((sum, game) => sum + game.players, 0)
+  const totalGames = games.length
+  const avgRTP = games.reduce((sum, game) => sum + game.rtp, 0) / games.length
 
   return (
     <CasinoLayout>
@@ -153,7 +49,7 @@ export default function OriginalsPage() {
               <Users className="h-5 w-5 text-green-400" />
               <div>
                 <div className="text-sm text-gray-400">Total Players</div>
-                <div className="text-lg font-bold text-white">8,521</div>
+                <div className="text-lg font-bold text-white">{formatNumber(totalPlayers)}</div>
               </div>
             </div>
           </Card>
@@ -163,7 +59,7 @@ export default function OriginalsPage() {
               <Crown className="h-5 w-5 text-yellow-400" />
               <div>
                 <div className="text-sm text-gray-400">Original Games</div>
-                <div className="text-lg font-bold text-white">8</div>
+                <div className="text-lg font-bold text-white">{totalGames}</div>
               </div>
             </div>
           </Card>
@@ -183,7 +79,7 @@ export default function OriginalsPage() {
               <Star className="h-5 w-5 text-purple-400" />
               <div>
                 <div className="text-sm text-gray-400">Avg RTP</div>
-                <div className="text-lg font-bold text-white">99%</div>
+                <div className="text-lg font-bold text-white">{avgRTP.toFixed(1)}%</div>
               </div>
             </div>
           </Card>

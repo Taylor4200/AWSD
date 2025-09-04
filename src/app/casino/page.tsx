@@ -18,106 +18,47 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import GameCard from '@/components/ui/GameCard'
 import { formatNumber } from '@/lib/utils'
-
-interface Game {
-  id: string
-  name: string
-  provider: string
-  category: 'casino' | 'originals' | 'slots' | 'crash' | 'dice' | 'roulette' | 'blackjack' | 'baccarat' | 'poker'
-  players: number
-  rtp: number
-  isNew?: boolean
-  isHot?: boolean
-  isExclusive?: boolean
-  image: string
-  isFeatured?: boolean
-  tags?: string[]
-  recentWin?: number
-  popularity?: number
-  volatility?: 'low' | 'medium' | 'high'
-  minBet?: number
-  maxBet?: number
-  jackpot?: number
-}
+import { games, getGameCounts, searchGames } from '@/lib/gameData'
+import type { Game } from '@/lib/gameData'
 
 export default function CasinoPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
 
   const categories = [
-    { id: 'all', name: 'All Games', count: 2847 },
-    { id: 'slots', name: 'Slots', count: 1823 },
-    { id: 'table', name: 'Table Games', count: 156 },
-    { id: 'live', name: 'Live Casino', count: 89 },
-    { id: 'jackpots', name: 'Jackpots', count: 67 },
-    { id: 'new', name: 'New Games', count: 34 }
+    { id: 'all', name: 'All Games', count: 0 },
+    { id: 'slots', name: 'Slots', count: 0 },
+    { id: 'table', name: 'Table Games', count: 0 },
+    { id: 'live', name: 'Live Casino', count: 0 },
+    { id: 'new', name: 'New Games', count: 0 },
+    { id: 'originals', name: 'Originals', count: 0 }
   ]
 
-  const games: Game[] = [
-    {
-      id: '1',
-      name: 'Sweet Bonanza',
-      provider: 'Pragmatic Play',
-      category: 'slots',
-      players: 1247,
-      rtp: 96.51,
-      isHot: true,
-      image: '/Sweet1000.avif'
-    },
-    {
-      id: '2',
-      name: 'Gates of Olympus',
-      provider: 'Pragmatic Play',
-      category: 'slots',
-      players: 892,
-      rtp: 96.50,
-      isHot: true,
-      image: '/images/games/gates-of-olympus.jpg'
-    },
-    {
-      id: '3',
-      name: 'Book of Dead',
-      provider: 'Play\'n GO',
-      category: 'slots',
-      players: 634,
-      rtp: 94.25,
-      image: '/images/games/book-of-dead.jpg'
-    },
-    {
-      id: '4',
-      name: 'Lightning Roulette',
-      provider: 'Evolution Gaming',
-      category: 'roulette',
-      players: 445,
-      rtp: 97.30,
-      isNew: true,
-      image: '/images/games/lightning-roulette.jpg'
-    },
-    {
-      id: '5',
-      name: 'Blackjack Classic',
-      provider: 'NetEnt',
-      category: 'blackjack',
-      players: 234,
-      rtp: 99.28,
-      image: '/images/games/blackjack-classic.jpg'
-    },
-    {
-      id: '6',
-      name: 'Mega Moolah',
-      provider: 'Microgaming',
-      category: 'slots',
-      players: 567,
-      rtp: 88.12,
-      image: '/images/games/mega-moolah.jpg'
-    }
-  ]
+  // Get game counts from centralized data
+  const gameCounts = getGameCounts()
+
+  // Update categories with real counts
+  const updatedCategories = categories.map(cat => ({
+    ...cat,
+    count: gameCounts[cat.id as keyof typeof gameCounts] || 0
+  }))
 
   const filteredGames = games.filter(game => {
     const matchesSearch = game.name.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesCategory = selectedCategory === 'all' || game.category === selectedCategory
     return matchesSearch && matchesCategory
   })
+
+  const getCategoryDisplayName = (categoryId: string) => {
+    switch (categoryId) {
+      case 'slots': return 'Slots'
+      case 'table': return 'Table Games'
+      case 'live': return 'Live Casino'
+      case 'new': return 'New Games'
+      case 'originals': return 'Originals'
+      default: return 'Games'
+    }
+  }
 
   return (
     <CasinoLayout>
@@ -148,7 +89,7 @@ export default function CasinoPage() {
 
           {/* Category Tabs */}
           <div className="flex space-x-2 overflow-x-auto pb-2">
-            {categories.map((category) => (
+            {updatedCategories.map((category) => (
               <Button
                 key={category.id}
                 variant={selectedCategory === category.id ? "default" : "ghost"}
@@ -170,22 +111,39 @@ export default function CasinoPage() {
         </div>
 
         {/* Games Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-          {filteredGames.map((game, index) => (
-            <motion.div
-              key={game.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
-              whileHover={{ scale: 1.05 }}
-            >
-              <GameCard 
-                game={game} 
-                variant="compact"
-              />
-            </motion.div>
-          ))}
-        </div>
+        {filteredGames.length > 0 ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+            {filteredGames.map((game, index) => (
+              <motion.div
+                key={game.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+                whileHover={{ scale: 1.05 }}
+              >
+                <GameCard 
+                  game={game} 
+                  variant="compact"
+                />
+              </motion.div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <div className="text-gray-400 text-lg mb-2">
+              {searchTerm ? 'No games found matching your search.' : `${getCategoryDisplayName(selectedCategory)} games coming soon!`}
+            </div>
+            {searchTerm && (
+              <Button 
+                variant="outline" 
+                onClick={() => setSearchTerm('')}
+                className="mt-4"
+              >
+                Clear Search
+              </Button>
+            )}
+          </div>
+        )}
 
         {/* Load More */}
         <div className="text-center mt-8">

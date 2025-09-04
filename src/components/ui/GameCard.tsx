@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Play, Users, Zap, Star, Crown } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
@@ -16,6 +16,8 @@ interface GameCardProps {
 }
 
 const GameCard: React.FC<GameCardProps> = ({ game, variant = 'default', onClick, onPlay }) => {
+  const [imageError, setImageError] = useState(false)
+
   const getVolatilityColor = (volatility: string) => {
     switch (volatility) {
       case 'low': return 'text-green-400'
@@ -45,24 +47,20 @@ const GameCard: React.FC<GameCardProps> = ({ game, variant = 'default', onClick,
       >
         <div className="relative aspect-[3/2] bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg overflow-hidden border border-gray-700 hover:border-[#00d4ff]/50 transition-all duration-300">
           {/* Background Image */}
-          {game.image && (
+          {game.image && !imageError && (
             <img 
               src={game.image} 
               alt={game.name}
               className="absolute inset-0 w-full h-full object-fill"
-              onError={(e) => {
-                // If image fails to load, hide it and show placeholder
-                e.currentTarget.style.display = 'none'
-                e.currentTarget.nextElementSibling?.classList.remove('opacity-0')
-              }}
+              onError={() => setImageError(true)}
             />
           )}
           
           {/* Fallback gradient background */}
-          <div className={`absolute inset-0 bg-gradient-to-br ${getCategoryColor(game.category)} ${game.image ? 'opacity-0' : ''}`} />
+          <div className={`absolute inset-0 bg-gradient-to-br ${getCategoryColor(game.category)} ${game.image && !imageError ? 'opacity-0' : ''}`} />
           
-          {/* Game-specific visual elements - only show if no image */}
-          {!game.image && (
+          {/* Game-specific visual elements - only show if no image or image failed */}
+          {(!game.image || imageError) && (
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-center">
                 <div className="text-2xl font-bold text-white/80 mb-2">IMAGE</div>
@@ -124,24 +122,20 @@ const GameCard: React.FC<GameCardProps> = ({ game, variant = 'default', onClick,
       >
         <div className="relative aspect-video bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg overflow-hidden border border-gray-700 hover:border-[#00d4ff]/50 transition-all duration-300">
           {/* Background Image */}
-          {game.image && (
+          {game.image && !imageError && (
             <img 
               src={game.image} 
               alt={game.name}
               className="absolute inset-0 w-full h-full object-fill"
-              onError={(e) => {
-                // If image fails to load, hide it and show placeholder
-                e.currentTarget.style.display = 'none'
-                e.currentTarget.nextElementSibling?.classList.remove('opacity-0')
-              }}
+              onError={() => setImageError(true)}
             />
           )}
           
           {/* Fallback gradient background */}
-          <div className={`absolute inset-0 bg-gradient-to-br ${getCategoryColor(game.category)} ${game.image ? 'opacity-0' : ''}`} />
+          <div className={`absolute inset-0 bg-gradient-to-br ${getCategoryColor(game.category)} ${game.image && !imageError ? 'opacity-0' : ''}`} />
           
-          {/* Game-specific visual elements - only show if no image */}
-          {!game.image && (
+          {/* Game-specific visual elements - only show if no image or image failed */}
+          {(!game.image || imageError) && (
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-center">
                 <div className="text-4xl font-bold text-white/80 mb-2">IMAGE</div>
@@ -222,24 +216,20 @@ const GameCard: React.FC<GameCardProps> = ({ game, variant = 'default', onClick,
     >
       <div className="relative aspect-[3/2] bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg overflow-hidden border border-gray-700 hover:border-[#00d4ff]/50 transition-all duration-300">
         {/* Background Image */}
-        {game.image && (
+        {game.image && !imageError && (
           <img 
             src={game.image} 
             alt={game.name}
             className="absolute inset-0 w-full h-full object-fill"
-            onError={(e) => {
-              // If image fails to load, hide it and show placeholder
-              e.currentTarget.style.display = 'none'
-              e.currentTarget.nextElementSibling?.classList.remove('opacity-0')
-            }}
+            onError={() => setImageError(true)}
           />
         )}
         
         {/* Fallback gradient background */}
-        <div className={`absolute inset-0 bg-gradient-to-br ${getCategoryColor(game.category)} ${game.image ? 'opacity-0' : ''}`} />
+        <div className={`absolute inset-0 bg-gradient-to-br ${getCategoryColor(game.category)} ${game.image && !imageError ? 'opacity-0' : ''}`} />
         
-        {/* Game-specific visual elements - only show if no image */}
-        {!game.image && (
+        {/* Game-specific visual elements - only show if no image or image failed */}
+        {(!game.image || imageError) && (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center">
               <div className="text-3xl font-bold text-white/80 mb-2">IMAGE</div>

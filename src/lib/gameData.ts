@@ -2,315 +2,355 @@ export interface Game {
   id: string
   name: string
   provider: string
-  category: 'casino' | 'originals' | 'slots' | 'crash' | 'dice' | 'roulette' | 'blackjack' | 'baccarat' | 'poker'
+  category: 'slots' | 'table' | 'live' | 'originals' | 'crash' | 'dice' | 'roulette' | 'blackjack' | 'baccarat' | 'poker' | 'game-show'
+  type?: 'roulette' | 'blackjack' | 'baccarat' | 'poker' | 'game-show'
+  players: number
+  rtp: number
+  isNew?: boolean
+  isHot?: boolean
+  isExclusive?: boolean
+  isFeatured?: boolean
   image: string
-  description?: string
-  rtp?: number
+  tags?: string[]
+  recentWin?: number
+  popularity?: number
   volatility?: 'low' | 'medium' | 'high'
   minBet?: number
   maxBet?: number
   jackpot?: number
-  players?: number
-  isHot?: boolean
-  isNew?: boolean
-  isExclusive?: boolean
-  isFeatured?: boolean
-  tags?: string[]
-  recentWin?: number
-  popularity?: number
+  dealer?: string
+  language?: string
+  tableLimit?: string
+  thumbnail?: string
+  isFavorite?: boolean
 }
 
 export const games: Game[] = [
-  // Featured Games
+  // SLOTS GAMES
   {
-    id: 'sweet-bonanza-1000',
-    name: 'Sweet Bonanza 1000',
-    provider: 'PRAGMATIC PLAY',
+    id: 'sweet-bonanza',
+    name: 'Sweet Bonanza',
+    provider: 'Pragmatic Play',
     category: 'slots',
-    image: '/Sweet1000.avif',
-    description: 'A sweet adventure with cascading wins and multipliers up to 1000x',
-    rtp: 96.5,
-    volatility: 'high',
-    minBet: 0.20,
-    maxBet: 100,
-    jackpot: 50000,
     players: 1247,
+    rtp: 96.51,
     isHot: true,
     isFeatured: true,
-    tags: ['candy', 'multiplier', 'cascading'],
-    recentWin: 15420,
-    popularity: 95
-  },
-  {
-    id: 'dog-house-royal-hunt',
-    name: 'The Dog House Royal Hunt',
-    provider: 'PRAGMATIC PLAY',
-    category: 'slots',
-    image: '/RoyalHunt.avif',
-    description: 'Hunt for royal treasures with wild multipliers and free spins',
-    rtp: 96.5,
+    image: '/Sweet1000.avif',
+    tags: ['sweet', 'bonanza', 'pragmatic', 'popular'],
+    popularity: 95,
     volatility: 'high',
     minBet: 0.20,
-    maxBet: 100,
-    jackpot: 75000,
+    maxBet: 100
+  },
+  {
+    id: 'gates-of-olympus',
+    name: 'Gates of Olympus',
+    provider: 'Pragmatic Play',
+    category: 'slots',
     players: 892,
-    isNew: true,
-    isFeatured: true,
-    tags: ['animals', 'wilds', 'free-spins'],
-    recentWin: 23450,
-    popularity: 88
-  },
-  {
-    id: 'sugar-rush-1000',
-    name: 'Sugar Rush 1000',
-    provider: 'PRAGMATIC PLAY',
-    category: 'slots',
-    image: '/Sugar1000.avif',
-    description: 'Delicious wins with up to 1000x multipliers in this sweet slot',
-    rtp: 96.5,
-    volatility: 'high',
-    minBet: 0.20,
-    maxBet: 100,
-    jackpot: 60000,
-    players: 1567,
+    rtp: 96.50,
     isHot: true,
     isFeatured: true,
-    tags: ['candy', 'multiplier', 'sweet'],
-    recentWin: 18750,
-    popularity: 92
-  },
-  {
-    id: 'gem-ghosts',
-    name: 'Gem Ghosts',
-    provider: 'BULLSHARK GAMES',
-    category: 'slots',
     image: '/GemGhosts.avif',
-    description: 'Mine for precious gems in this ghostly adventure',
-    rtp: 96.0,
-    volatility: 'medium',
-    minBet: 0.10,
-    maxBet: 50,
-    jackpot: 25000,
-    players: 445,
-    isNew: true,
-    isFeatured: true,
-    tags: ['gems', 'mining', 'ghosts'],
-    recentWin: 8920,
-    popularity: 76
-  },
-  {
-    id: 'sweet-bonanza-xmas',
-    name: 'Sweet Bonanza Xmas',
-    provider: 'PRAGMATIC PLAY',
-    category: 'slots',
-    image: '/SweetXmas.avif',
-    description: 'Festive fun with holiday-themed cascading wins',
-    rtp: 96.5,
+    tags: ['gates', 'olympus', 'pragmatic', 'greek'],
+    popularity: 92,
     volatility: 'high',
     minBet: 0.20,
-    maxBet: 100,
-    jackpot: 40000,
-    players: 678,
-    isNew: true,
-    isFeatured: true,
-    tags: ['christmas', 'candy', 'festive'],
-    recentWin: 12340,
-    popularity: 85
+    maxBet: 100
   },
+  {
+    id: 'book-of-dead',
+    name: 'Book of Dead',
+    provider: 'Play\'n GO',
+    category: 'slots',
+    players: 634,
+    rtp: 94.25,
+    image: '/RoyalHunt.avif',
+    tags: ['book', 'dead', 'egyptian', 'adventure'],
+    popularity: 88,
+    volatility: 'high',
+    minBet: 0.10,
+    maxBet: 50
+  },
+  {
+    id: 'mega-moolah',
+    name: 'Mega Moolah',
+    provider: 'Microgaming',
+    category: 'slots',
+    players: 567,
+    rtp: 88.12,
+    image: '', // Will show "IMAGE COMING SOON"
+    tags: ['mega', 'moolah', 'progressive', 'jackpot'],
+    popularity: 85,
+    volatility: 'high',
+    minBet: 0.25,
+    maxBet: 125,
+    jackpot: 1000000
+  },
+  {
+    id: 'starburst',
+    name: 'Starburst',
+    provider: 'NetEnt',
+    category: 'slots',
+    players: 445,
+    rtp: 96.09,
+    image: '/SweetXmas.avif',
+    tags: ['starburst', 'gems', 'classic'],
+    popularity: 90,
+    volatility: 'low',
+    minBet: 0.10,
+    maxBet: 100
+  },
+
+  // TABLE GAMES
+  {
+    id: 'blackjack-classic',
+    name: 'Blackjack Classic',
+    provider: 'NetEnt',
+    category: 'table',
+    players: 234,
+    rtp: 99.28,
+    image: '', // Will show "IMAGE COMING SOON"
+    tags: ['blackjack', 'classic', 'card', 'game'],
+    popularity: 85,
+    volatility: 'low',
+    minBet: 1,
+    maxBet: 1000
+  },
+  {
+    id: 'european-roulette',
+    name: 'European Roulette',
+    provider: 'NetEnt',
+    category: 'table',
+    players: 189,
+    rtp: 97.30,
+    image: '/Sugar1000.avif',
+    tags: ['european', 'roulette', 'wheel', 'classic'],
+    popularity: 88,
+    volatility: 'low',
+    minBet: 0.10,
+    maxBet: 1000
+  },
+  {
+    id: 'baccarat-pro',
+    name: 'Baccarat Pro',
+    provider: 'Microgaming',
+    category: 'table',
+    players: 145,
+    rtp: 98.94,
+    image: '', // Will show "IMAGE COMING SOON"
+    tags: ['baccarat', 'pro', 'card', 'game'],
+    popularity: 82,
+    volatility: 'low',
+    minBet: 1,
+    maxBet: 500
+  },
+
+  // LIVE CASINO GAMES
+  {
+    id: 'lightning-roulette',
+    name: 'Lightning Roulette',
+    provider: 'Evolution Gaming',
+    category: 'live',
+    type: 'roulette',
+    players: 445,
+    rtp: 97.30,
+    isNew: true,
+    isHot: true,
+    image: '', // Will show "IMAGE COMING SOON"
+    tags: ['lightning', 'roulette', 'live', 'dealer'],
+    popularity: 95,
+    volatility: 'low',
+    minBet: 0.20,
+    maxBet: 2000,
+    dealer: 'Sarah',
+    language: 'English',
+    tableLimit: '€2000'
+  },
+  {
+    id: 'blackjack-vip',
+    name: 'Blackjack VIP',
+    provider: 'Evolution Gaming',
+    category: 'live',
+    type: 'blackjack',
+    players: 234,
+    rtp: 99.28,
+    isHot: true,
+    image: '', // Will show "IMAGE COMING SOON"
+    tags: ['blackjack', 'vip', 'live', 'dealer'],
+    popularity: 90,
+    volatility: 'low',
+    minBet: 1,
+    maxBet: 5000,
+    dealer: 'Mike',
+    language: 'English',
+    tableLimit: '€5000'
+  },
+  {
+    id: 'speed-baccarat',
+    name: 'Speed Baccarat',
+    provider: 'Evolution Gaming',
+    category: 'live',
+    type: 'baccarat',
+    players: 189,
+    rtp: 98.94,
+    image: '', // Will show "IMAGE COMING SOON"
+    tags: ['speed', 'baccarat', 'live', 'dealer'],
+    popularity: 85,
+    volatility: 'low',
+    minBet: 0.50,
+    maxBet: 1000,
+    dealer: 'Emma',
+    language: 'English',
+    tableLimit: '€1000'
+  },
+  {
+    id: 'crazy-time',
+    name: 'Crazy Time',
+    provider: 'Evolution Gaming',
+    category: 'live',
+    type: 'game-show',
+    players: 156,
+    rtp: 96.08,
+    isHot: true,
+    image: '', // Will show "IMAGE COMING SOON"
+    tags: ['crazy', 'time', 'game', 'show'],
+    popularity: 92,
+    volatility: 'high',
+    minBet: 0.10,
+    maxBet: 500,
+    dealer: 'Alex',
+    language: 'English',
+    tableLimit: '€500'
+  },
+
+  // EDGE ORIGINALS GAMES
   {
     id: 'dice',
-    name: 'DICE',
+    name: 'Edge Dice',
     provider: 'EDGE ORIGINALS',
-    category: 'dice',
-    image: '/Dice.avif',
-    description: 'Classic dice game with provably fair results',
-    rtp: 99.0,
-    volatility: 'medium',
-    minBet: 0.01,
-    maxBet: 1000,
-    jackpot: 50000,
-    players: 1892,
-    isHot: true,
-    isFeatured: true,
-    tags: ['dice', 'classic', 'provably-fair'],
-    recentWin: 15670,
-    popularity: 91
-  },
-
-  // Casino Games
-  {
-    id: 'neon-crash',
-    name: 'Neon Crash',
-    provider: 'EDGE ORIGINALS',
-    category: 'crash',
-    image: '/images/games/neon-crash.jpg',
-    description: 'Watch the multiplier grow and cash out before it crashes',
-    rtp: 99.0,
-    volatility: 'high',
-    minBet: 0.01,
-    maxBet: 1000,
-    jackpot: 100000,
-    players: 3421,
-    isHot: true,
+    category: 'originals',
+    players: 445,
+    rtp: 97.00,
     isExclusive: true,
-    tags: ['crash', 'multiplier', 'neon'],
-    recentWin: 45670,
-    popularity: 97
-  },
-  {
-    id: 'cyber-slots',
-    name: 'Cyber Slots',
-    provider: 'EDGE ORIGINALS',
-    category: 'slots',
-    image: '/images/games/cyber-slots.jpg',
-    description: 'Futuristic slot machine with cyberpunk aesthetics',
-    rtp: 96.8,
+    image: '/Dice.avif',
+    tags: ['edge', 'dice', 'exclusive', 'original'],
+    popularity: 88,
     volatility: 'medium',
     minBet: 0.10,
-    maxBet: 100,
-    jackpot: 75000,
-    players: 1234,
-    isNew: true,
-    isExclusive: true,
-    tags: ['cyberpunk', 'futuristic', 'slots'],
-    recentWin: 23450,
-    popularity: 82
+    maxBet: 500
   },
-  {
-    id: 'quantum-dice',
-    name: 'Quantum Dice',
-    provider: 'EDGE ORIGINALS',
-    category: 'dice',
-    image: '/images/games/quantum-dice.jpg',
-    description: 'Quantum mechanics meets classic dice game',
-    rtp: 98.2,
-    volatility: 'medium',
-    minBet: 0.01,
-    maxBet: 1000,
-    jackpot: 50000,
-    players: 892,
-    isExclusive: true,
-    tags: ['quantum', 'dice', 'physics'],
-    recentWin: 15670,
-    popularity: 78
-  },
-  {
-    id: 'holographic-roulette',
-    name: 'Holographic Roulette',
-    provider: 'EDGE ORIGINALS',
-    category: 'roulette',
-    image: '/images/games/holo-roulette.jpg',
-    description: '3D holographic roulette with immersive experience',
-    rtp: 97.1,
-    volatility: 'low',
-    minBet: 1.00,
-    maxBet: 1000,
-    jackpot: 35000,
-    players: 567,
-    isHot: true,
-    isExclusive: true,
-    tags: ['holographic', 'roulette', '3d'],
-    recentWin: 8920,
-    popularity: 85
-  },
-
-  // Originals
   {
     id: 'edge-crash',
-    name: 'EDGE Crash',
+    name: 'Edge Crash',
     provider: 'EDGE ORIGINALS',
-    category: 'crash',
-    image: '/images/games/edge-crash.jpg',
-    description: 'Our signature crash game with unique mechanics',
-    rtp: 99.0,
-    volatility: 'high',
-    minBet: 0.01,
-    maxBet: 1000,
-    jackpot: 100000,
-    players: 5678,
+    category: 'originals',
+    players: 567,
+    rtp: 97.00,
+    isExclusive: true,
     isHot: true,
-    isExclusive: true,
-    tags: ['crash', 'signature', 'unique'],
-    recentWin: 67890,
-    popularity: 99
-  },
-  {
-    id: 'edge-dice',
-    name: 'EDGE Dice',
-    provider: 'EDGE ORIGINALS',
-    category: 'dice',
-    image: '/images/games/edge-dice.jpg',
-    description: 'Classic dice game with EDGE twist',
-    rtp: 99.0,
-    volatility: 'medium',
-    minBet: 0.01,
-    maxBet: 1000,
-    jackpot: 50000,
-    players: 3456,
-    isExclusive: true,
-    tags: ['dice', 'classic', 'edge'],
-    recentWin: 23450,
-    popularity: 92
+    isFeatured: true,
+    image: '', // Will show "IMAGE COMING SOON"
+    tags: ['edge', 'crash', 'exclusive', 'original'],
+    popularity: 95,
+    volatility: 'high',
+    minBet: 0.10,
+    maxBet: 1000
   },
   {
     id: 'edge-roulette',
-    name: 'EDGE Roulette',
+    name: 'Edge Roulette',
     provider: 'EDGE ORIGINALS',
-    category: 'roulette',
-    image: '/images/games/edge-roulette.jpg',
-    description: 'European roulette with enhanced graphics',
-    rtp: 97.3,
-    volatility: 'low',
-    minBet: 1.00,
-    maxBet: 1000,
-    jackpot: 35000,
-    players: 1234,
+    category: 'originals',
+    players: 234,
+    rtp: 97.30,
     isExclusive: true,
-    tags: ['roulette', 'european', 'enhanced'],
-    recentWin: 8920,
-    popularity: 87
+    image: '', // Will show "IMAGE COMING SOON"
+    tags: ['edge', 'roulette', 'exclusive', 'original'],
+    popularity: 85,
+    volatility: 'low',
+    minBet: 0.10,
+    maxBet: 1000
   },
   {
     id: 'edge-blackjack',
-    name: 'EDGE Blackjack',
+    name: 'Edge Blackjack',
     provider: 'EDGE ORIGINALS',
-    category: 'blackjack',
-    image: '/images/games/edge-blackjack.jpg',
-    description: 'Beat the dealer in our classic blackjack game',
-    rtp: 99.5,
-    volatility: 'low',
-    minBet: 1.00,
-    maxBet: 1000,
-    jackpot: 25000,
-    players: 987,
+    category: 'originals',
+    players: 189,
+    rtp: 99.28,
     isExclusive: true,
-    tags: ['blackjack', 'classic', 'dealer'],
-    recentWin: 5670,
-    popularity: 84
+    image: '', // Will show "IMAGE COMING SOON"
+    tags: ['edge', 'blackjack', 'exclusive', 'original'],
+    popularity: 82,
+    volatility: 'low',
+    minBet: 1,
+    maxBet: 1000
+  },
+  {
+    id: 'edge-baccarat',
+    name: 'Edge Baccarat',
+    provider: 'EDGE ORIGINALS',
+    category: 'originals',
+    players: 156,
+    rtp: 98.94,
+    isExclusive: true,
+    image: '', // Will show "IMAGE COMING SOON"
+    tags: ['edge', 'baccarat', 'exclusive', 'original'],
+    popularity: 78,
+    volatility: 'low',
+    minBet: 1,
+    maxBet: 500
   }
 ]
 
-// Helper functions
+// Utility functions to filter games by category
 export const getGamesByCategory = (category: string): Game[] => {
   return games.filter(game => game.category === category)
 }
 
-export const getFeaturedGames = (): Game[] => {
-  return games.filter(game => game.isFeatured)
+export const getLiveGames = (): Game[] => {
+  return games.filter(game => game.category === 'live')
 }
 
-export const getHotGames = (): Game[] => {
-  return games.filter(game => game.isHot)
+export const getSlotsGames = (): Game[] => {
+  return games.filter(game => game.category === 'slots')
+}
+
+export const getTableGames = (): Game[] => {
+  return games.filter(game => game.category === 'table')
+}
+
+export const getOriginalsGames = (): Game[] => {
+  return games.filter(game => game.category === 'originals')
 }
 
 export const getNewGames = (): Game[] => {
   return games.filter(game => game.isNew)
 }
 
-export const getExclusiveGames = (): Game[] => {
-  return games.filter(game => game.isExclusive)
+export const getHotGames = (): Game[] => {
+  return games.filter(game => game.isHot)
 }
 
+export const getFeaturedGames = (): Game[] => {
+  return games.filter(game => game.isFeatured)
+}
+
+// Get game counts for each category
+export const getGameCounts = () => {
+  return {
+    all: games.length,
+    slots: getSlotsGames().length,
+    table: getTableGames().length,
+    live: getLiveGames().length,
+    new: getNewGames().length,
+    originals: getOriginalsGames().length
+  }
+}
+
+// Search games by name, provider, or tags
 export const searchGames = (query: string): Game[] => {
   const lowercaseQuery = query.toLowerCase()
   return games.filter(game => 
@@ -318,8 +358,4 @@ export const searchGames = (query: string): Game[] => {
     game.provider.toLowerCase().includes(lowercaseQuery) ||
     game.tags?.some(tag => tag.toLowerCase().includes(lowercaseQuery))
   )
-}
-
-export const getGameById = (id: string): Game | undefined => {
-  return games.find(game => game.id === id)
 }

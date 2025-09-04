@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Dice1,
   Shield,
   Target,
   Zap,
@@ -31,6 +30,7 @@ import { Input } from '@/components/ui/Input'
 import CurrencySelector from '@/components/ui/CurrencySelector'
 import { useUserStore } from '@/store/userStore'
 import { useUIStore } from '@/store/uiStore'
+import { useGameStatsStore } from '@/store/gameStatsStore'
 import { formatCurrency } from '@/lib/utils'
 import CasinoLayout from '@/components/layout/CasinoLayout'
 import { 
@@ -61,6 +61,7 @@ interface RollHistory {
 const EdgeDice: React.FC = () => {
   const { user, selectedCurrency, setSelectedCurrency } = useUserStore()
   const { setLiveStatsModal } = useUIStore()
+  const { addRoll } = useGameStatsStore()
 
   // Screen size detection
   const [isDesktop, setIsDesktop] = useState(false)
@@ -330,7 +331,14 @@ const EdgeDice: React.FC = () => {
       timestamp: new Date()
     }
 
+    // Add to local roll history for display
     setRollHistory(prev => [newRoll, ...prev.slice(0, 19)]) // Keep last 20 rolls
+    
+    // Add to global stats store
+    addRoll({
+      ...newRoll,
+      gameType: 'Dice'
+    })
 
     // Run ticker animation first
     await runTickerAnimation(result, turboSpeed === 'fast' ? undefined : turboSpeed)
@@ -444,7 +452,14 @@ const EdgeDice: React.FC = () => {
       timestamp: new Date()
     }
 
+    // Add to local roll history for display
     setRollHistory(prev => [newRoll, ...prev.slice(0, 19)]) // Keep last 20 rolls
+    
+    // Add to global stats store
+    addRoll({
+      ...newRoll,
+      gameType: 'Dice'
+    })
 
     // Run ticker animation first
     await runTickerAnimation(result, turboMode ? autoSettings.turboSpeed : undefined)
@@ -526,7 +541,7 @@ const EdgeDice: React.FC = () => {
                 animate={{ opacity: 1, y: 0 }}
                 className="flex items-center justify-center space-x-3 mb-2"
               >
-                <Dice1 className="h-8 w-8 text-[#00d4ff]" />
+                <img src="/Logo11.png" alt="Logo" className="h-8 w-8" />
                 <h1 className="text-3xl font-bold text-white">Dice</h1>
               </motion.div>
             </div>
@@ -949,14 +964,14 @@ const EdgeDice: React.FC = () => {
           <div className="max-w-md mx-auto min-h-screen">
             {/* Header */}
             <div className="text-center py-2 px-4 sticky top-0 bg-[#0f1419] z-10">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex items-center justify-center space-x-3 mb-1"
-              >
-                <Dice1 className="h-5 w-5 text-[#00d4ff]" />
-                <h1 className="text-xl font-bold text-white">Dice</h1>
-              </motion.div>
+                              <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex items-center justify-center space-x-3 mb-1"
+                >
+                  <img src="/Logo11.png" alt="Logo" className="h-5 w-5" />
+                  <h1 className="text-xl font-bold text-white">Dice</h1>
+                </motion.div>
             </div>
 
             {/* Main Game Container */}
@@ -1369,8 +1384,8 @@ const EdgeDice: React.FC = () => {
                 onClick={() => setShowFairnessModal(true)}
                 className="w-full border-[#374151] text-gray-300 hover:bg-[#374151]"
               >
-                <Shield className="h-4 w-4 mr-2" />
-                Fairness
+                                  <Shield className="h-4 w-4 mr-2" />
+                  Fairness
               </Button>
             </div>
           </div>

@@ -23,33 +23,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import GameCard from '@/components/ui/GameCard'
 import CasinoLayout from '@/components/layout/CasinoLayout'
 import { formatCurrency } from '@/lib/utils'
-
-interface LiveGame {
-  id: string
-  name: string
-  type: 'roulette' | 'blackjack' | 'baccarat' | 'poker' | 'game-show'
-  dealer: string
-  players: number
-  minBet: number
-  maxBet: number
-  isFavorite: boolean
-  isHot: boolean
-  thumbnail: string
-  language: string
-  tableLimit: string
-  provider: string
-  category: 'casino' | 'originals' | 'slots' | 'crash' | 'dice' | 'roulette' | 'blackjack' | 'baccarat' | 'poker'
-  image: string
-  isExclusive?: boolean
-  isNew?: boolean
-  isFeatured?: boolean
-  tags?: string[]
-  recentWin?: number
-  popularity?: number
-  rtp?: number
-  volatility?: 'low' | 'medium' | 'high'
-  jackpot?: number
-}
+import { getLiveGames } from '@/lib/gameData'
+import type { Game } from '@/lib/gameData'
 
 const LivePage: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState('all')
@@ -64,110 +39,8 @@ const LivePage: React.FC = () => {
     { id: 'game-show', name: 'Game Shows', icon: Video }
   ]
 
-  const liveGames: LiveGame[] = [
-    {
-      id: '1',
-      name: 'Lightning Roulette',
-      type: 'roulette',
-      dealer: 'Sarah',
-      players: 127,
-      minBet: 0.20,
-      maxBet: 2000,
-      isFavorite: true,
-      isHot: true,
-      thumbnail: '/api/placeholder/300/200',
-      language: 'English',
-      tableLimit: '€2000',
-      provider: 'Evolution Gaming',
-      category: 'roulette',
-      image: '/images/games/lightning-roulette.jpg'
-    },
-    {
-      id: '2',
-      name: 'Blackjack VIP',
-      type: 'blackjack',
-      dealer: 'Mike',
-      players: 89,
-      minBet: 1,
-      maxBet: 5000,
-      isFavorite: false,
-      isHot: true,
-      thumbnail: '/api/placeholder/300/200',
-      language: 'English',
-      tableLimit: '€5000',
-      provider: 'Evolution Gaming',
-      category: 'blackjack',
-      image: '/images/games/blackjack-vip.jpg'
-    },
-    {
-      id: '3',
-      name: 'Speed Baccarat',
-      type: 'baccarat',
-      dealer: 'Emma',
-      players: 156,
-      minBet: 0.50,
-      maxBet: 1000,
-      isFavorite: true,
-      isHot: false,
-      thumbnail: '/api/placeholder/300/200',
-      language: 'English',
-      tableLimit: '€1000',
-      provider: 'Evolution Gaming',
-      category: 'baccarat',
-      image: '/images/games/speed-baccarat.jpg'
-    },
-    {
-      id: '4',
-      name: 'Crazy Time',
-      type: 'game-show',
-      dealer: 'Alex',
-      players: 234,
-      minBet: 0.10,
-      maxBet: 500,
-      isFavorite: false,
-      isHot: true,
-      thumbnail: '/api/placeholder/300/200',
-      language: 'English',
-      tableLimit: '€500',
-      provider: 'Evolution Gaming',
-      category: 'casino',
-      image: '/images/games/crazy-time.jpg'
-    },
-    {
-      id: '5',
-      name: 'Three Card Poker',
-      type: 'poker',
-      dealer: 'Lisa',
-      players: 67,
-      minBet: 0.50,
-      maxBet: 2000,
-      isFavorite: true,
-      isHot: false,
-      thumbnail: '/api/placeholder/300/200',
-      language: 'English',
-      tableLimit: '€2000',
-      provider: 'Evolution Gaming',
-      category: 'poker',
-      image: '/images/games/three-card-poker.jpg'
-    },
-    {
-      id: '6',
-      name: 'Auto Roulette',
-      type: 'roulette',
-      dealer: 'Auto',
-      players: 45,
-      minBet: 0.10,
-      maxBet: 1000,
-      isFavorite: false,
-      isHot: false,
-      thumbnail: '/api/placeholder/300/200',
-      language: 'English',
-      tableLimit: '€1000',
-      provider: 'Evolution Gaming',
-      category: 'roulette',
-      image: '/images/games/auto-roulette.jpg'
-    }
-  ]
+  // Get live games from centralized data
+  const liveGames = getLiveGames()
 
   const filteredGames = liveGames.filter(game => 
     selectedCategory === 'all' || game.type === selectedCategory
@@ -178,9 +51,9 @@ const LivePage: React.FC = () => {
       case 'popular':
         return b.players - a.players
       case 'min-bet':
-        return a.minBet - b.minBet
+        return (a.minBet || 0) - (b.minBet || 0)
       case 'max-bet':
-        return b.maxBet - a.maxBet
+        return (b.maxBet || 0) - (a.maxBet || 0)
       default:
         return 0
     }

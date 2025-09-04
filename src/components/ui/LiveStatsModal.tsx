@@ -20,6 +20,7 @@ import {
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { useUserStore } from '@/store/userStore'
+import { useGameStatsStore, GameStats } from '@/store/gameStatsStore'
 import { formatCurrency } from '@/lib/utils'
 
 interface LiveStatsModalProps {
@@ -28,46 +29,30 @@ interface LiveStatsModalProps {
   gameType?: string
 }
 
-interface GameStats {
-  totalWagered: number
-  totalProfit: number
-  wins: number
-  losses: number
-  winRate: number
-  biggestWin: number
-  biggestLoss: number
-  averageBet: number
-  totalBets: number
-  sessionTime: number
-}
-
 const LiveStatsModal: React.FC<LiveStatsModalProps> = ({ 
   isOpen, 
   onClose, 
   gameType = 'All' 
 }) => {
   const { user } = useUserStore()
+  const { globalStats, getStatsForGame, getSessionTime, resetStats } = useGameStatsStore()
   const [position, setPosition] = useState({ x: 0, y: 0 })
   const [isDragging, setIsDragging] = useState(false)
   const [isMinimized, setIsMinimized] = useState(false)
   const [selectedGame, setSelectedGame] = useState(gameType)
   const [lastRefresh, setLastRefresh] = useState(new Date())
+  const [isClient, setIsClient] = useState(false)
   
   const modalRef = useRef<HTMLDivElement>(null)
 
-  // Mock stats - in real app, these would come from a global stats store
-  const [stats, setStats] = useState<GameStats>({
-    totalWagered: 1250.75,
-    totalProfit: 89.50,
-    wins: 47,
-    losses: 23,
-    winRate: 67.1,
-    biggestWin: 245.00,
-    biggestLoss: 50.00,
-    averageBet: 17.85,
-    totalBets: 70,
-    sessionTime: 45 // minutes
-  })
+  // Ensure component only renders on client side
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
+
+  // Get real stats based on selected game
+  const stats: GameStats = selectedGame === 'All' ? globalStats : getStatsForGame(selectedGame)
+  const sessionTime = getSessionTime()
 
   const gameOptions = ['All', 'Dice', 'Slots', 'Blackjack', 'Roulette', 'Crash', 'Plinko']
 
@@ -88,7 +73,7 @@ const LiveStatsModal: React.FC<LiveStatsModalProps> = ({
 
   const refreshStats = () => {
     setLastRefresh(new Date())
-    // In real app, this would fetch fresh stats from the server
+    resetStats() // Actually reset the stats when refresh is clicked
   }
 
   const formatTime = (minutes: number) => {
@@ -97,7 +82,16 @@ const LiveStatsModal: React.FC<LiveStatsModalProps> = ({
     return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`
   }
 
-  if (!isOpen) return null
+  const formatLastRefresh = (date: Date) => {
+    return date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true
+    })
+  }
+
+  if (!isOpen || !isClient) return null
 
   return (
          <motion.div
@@ -174,9 +168,9 @@ const LiveStatsModal: React.FC<LiveStatsModalProps> = ({
                   <option key={game} value={game}>{game}</option>
                 ))}
               </select>
-              <span className="text-xs text-gray-400">
-                Last: {lastRefresh.toLocaleTimeString()}
-              </span>
+                             <span className="text-xs text-gray-400">
+                 Last: {formatLastRefresh(lastRefresh)}
+               </span>
             </div>
 
             {/* Main Stats Grid */}
@@ -240,7 +234,7 @@ const LiveStatsModal: React.FC<LiveStatsModalProps> = ({
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-400">Session Time:</span>
-                <span className="text-white font-semibold">{formatTime(stats.sessionTime)}</span>
+                <span className="text-white font-semibold">{formatTime(sessionTime)}</span>
               </div>
             </div>
 
@@ -258,25 +252,25 @@ const LiveStatsModal: React.FC<LiveStatsModalProps> = ({
               </div>
             </div>
 
-            {/* Quick Actions */}
-            <div className="flex space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex-1 text-[#00d4ff] border-[#00d4ff] hover:bg-[#00d4ff] hover:text-black"
-              >
-                <TrendingUp className="h-3 w-3 mr-1" />
-                Export
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex-1 text-[#00d4ff] border-[#00d4ff] hover:bg-[#00d4ff] hover:text-black"
-              >
-                <Users className="h-3 w-3 mr-1" />
-                Share
-              </Button>
-            </div>
+                         {/* Quick Actions */}
+             <div className="flex space-x-2">
+               <Button
+                 variant="outline"
+                 size="sm"
+                 className="flex-1 text-[#00d4ff] border-[#00d4ff] hover:bg-[#00d4ff] hover:text-black"
+               >
+                 <TrendingUp className="h-3 w-3 mr-1" />
+                 Export
+               </Button>
+               <Button
+                 variant="outline"
+                 size="sm"
+                 className="flex-1 text-[#00d4ff] border-[#00d4ff] hover:bg-[#00d4ff] hover:text-black"
+               >
+                 <Users className="h-3 w-3 mr-1" />
+                 Share
+               </Button>
+             </div>
           </CardContent>
         )}
       </Card>
