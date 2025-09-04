@@ -84,16 +84,29 @@ export const gameUtils = {
     goldCoins?: number
   }) => {
     try {
+      // First get current stats
+      const { data: currentStats, error: fetchError } = await supabase
+        .from('user_stats')
+        .select('*')
+        .eq('id', userId)
+        .single()
+      
+      if (fetchError) throw fetchError
+      
+      // Calculate new values
+      const newStats = {
+        total_wagered: (currentStats?.total_wagered || 0) + gameData.wagered,
+        total_won: (currentStats?.total_won || 0) + gameData.won,
+        games_played: (currentStats?.games_played || 0) + 1,
+        games_won: (currentStats?.games_won || 0) + (gameData.isWin ? 1 : 0),
+        biggest_win: Math.max(currentStats?.biggest_win || 0, gameData.won),
+        updated_at: new Date().toISOString()
+      }
+      
+      // Update with new values
       const { data, error } = await supabase
         .from('user_stats')
-        .update({
-          total_wagered: supabase.sql`total_wagered + ${gameData.wagered}`,
-          total_won: supabase.sql`total_won + ${gameData.won}`,
-          games_played: supabase.sql`games_played + 1`,
-          games_won: supabase.sql`games_won + ${gameData.isWin ? 1 : 0}`,
-          biggest_win: supabase.sql`GREATEST(biggest_win, ${gameData.won})`,
-          updated_at: new Date().toISOString()
-        })
+        .update(newStats)
         .eq('id', userId)
         .select()
         .single()
