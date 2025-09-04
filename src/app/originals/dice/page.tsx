@@ -96,7 +96,9 @@ const EdgeDice: React.FC = () => {
     stopOnWin: false,
     stopOnLoss: false,
     winAmount: 100,
-    lossAmount: 50
+    lossAmount: 50,
+    turboEnabled: false,
+    turboSpeed: 'fast' as 'fast' | 'ultra' | 'instant'
   })
   const [autoProgress, setAutoProgress] = useState({
     isRunning: false,
@@ -241,36 +243,35 @@ const EdgeDice: React.FC = () => {
   }
 
     // Ticker animation function
-  const runTickerAnimation = async (finalValue: number) => {
+  const runTickerAnimation = async (finalValue: number, turboSpeedParam?: 'fast' | 'ultra' | 'instant') => {
     setIsTicking(true)
     setShowResult(false)
     setTickerValues([])
     setTickerPosition(0)
     
     // Skip animation for instant turbo mode
-    if (gameMode === 'turbo' && turboSpeed === 'instant') {
+    if ((gameMode === 'turbo' && turboSpeed === 'instant') || turboSpeedParam === 'instant') {
       setFinalResult(finalValue)
       setShowResult(true)
       setIsTicking(false)
       return
     }
     
-    const duration = gameMode === 'turbo' ?
-      (turboSpeed === 'ultra' ? 1 : turboSpeed === 'fast' ? 200 : 0) : (isDesktop ? 500 : 300)
+    const duration = turboSpeedParam ?
+      (turboSpeedParam === 'ultra' ? 0.5 : turboSpeedParam === 'fast' ? 200 : 0) :
+      (gameMode === 'turbo' ? (turboSpeed === 'ultra' ? 0.5 : turboSpeed === 'fast' ? 200 : 0) : (isDesktop ? 500 : 300))
 
     const steps = isDesktop ? 50 : 30
     const stepDuration = duration / steps
     
     for (let i = 0; i < steps; i++) {
-      // Generate random values that get closer to final value
-      const progress = i / steps
-      const randomValue = Math.random() * 100
-      const weightedValue = randomValue * (1 - progress) + finalValue * progress
-      
+      // Generate completely random values (0-99) for the entire animation
+      const randomValue = Math.floor(Math.random() * 100)
+
       // Show only one number at a time for more suspense
-      setTickerValues([Math.round(weightedValue)])
-      setTickerPosition(progress * 100)
-      
+      setTickerValues([randomValue])
+      setTickerPosition((i / steps) * 100)
+
       await new Promise(resolve => setTimeout(resolve, stepDuration))
     }
     
@@ -332,7 +333,7 @@ const EdgeDice: React.FC = () => {
     setRollHistory(prev => [newRoll, ...prev.slice(0, 19)]) // Keep last 20 rolls
 
     // Run ticker animation first
-    await runTickerAnimation(result)
+    await runTickerAnimation(result, turboSpeed === 'fast' ? undefined : turboSpeed)
 
     // Then show the final result
     setCurrentResult(result)
@@ -373,7 +374,7 @@ const EdgeDice: React.FC = () => {
 
       // Place individual bet with unique nonce
       currentNonce += 1 // Increment nonce for this bet
-      const result = await placeSingleBet(currentNonce)
+      const result = await placeSingleBet(currentNonce, autoSettings.turboEnabled)
 
       // Update progress
       setAutoProgress(prev => ({
@@ -384,9 +385,14 @@ const EdgeDice: React.FC = () => {
         totalLoss: prev.totalLoss + (result.won ? 0 : betAmount)
       }))
 
-      // Add delay between bets (except for last bet)
+      // Add delay between bets (except for last bet) - respect turbo settings
       if (i < autoSettings.betCount - 1) {
-        await new Promise(resolve => setTimeout(resolve, 1000))
+        const delay = autoSettings.turboEnabled ?
+          (autoSettings.turboSpeed === 'instant' ? 0 :
+           autoSettings.turboSpeed === 'ultra' ? 5 : 100) : 1000;
+        if (delay > 0) {
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
       }
     }
 
@@ -398,7 +404,7 @@ const EdgeDice: React.FC = () => {
     isRunningRef.current = false
   }
 
-  const placeSingleBet = async (nonce?: number) => {
+  const placeSingleBet = async (nonce?: number, turboMode?: boolean) => {
     if (betAmount <= 0 || !user) return { won: false, payout: 0 }
 
     // Check if user has enough balance for the selected currency
@@ -441,7 +447,7 @@ const EdgeDice: React.FC = () => {
     setRollHistory(prev => [newRoll, ...prev.slice(0, 19)]) // Keep last 20 rolls
 
     // Run ticker animation first
-    await runTickerAnimation(result)
+    await runTickerAnimation(result, turboMode ? autoSettings.turboSpeed : undefined)
 
     // Then show the final result
     setCurrentResult(result)
@@ -525,11 +531,11 @@ const EdgeDice: React.FC = () => {
               </motion.div>
             </div>
 
-            <div className="grid grid-cols-12 gap-6">
+            <div className="grid grid-cols-12 gap-4">
               {/* Left Panel - Controls */}
-              <div className="col-span-5 space-y-6">
+              <div className="col-span-5 space-y-4">
                 {/* Target Slider */}
-                <div className="bg-[#1a2c38] rounded-lg p-6">
+                <div className="bg-[#1a2c38] rounded-lg p-4">
                   <div className="flex items-center justify-between mb-4">
                     <span className="text-lg text-gray-400">Target</span>
                     <span className="text-2xl font-bold text-white">{target}</span>
@@ -634,8 +640,8 @@ const EdgeDice: React.FC = () => {
                 </div>
 
                 {/* Game Stats */}
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="bg-[#1a2c38] rounded-lg p-4 text-center">
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="bg-[#1a2c38] rounded-lg p-3 text-center">
                     <div className="text-sm text-gray-400 mb-2">Multiplier</div>
                     <div className="text-xl font-bold text-white">
                       {multiplier < 2 ? multiplier.toFixed(4) :
@@ -644,11 +650,11 @@ const EdgeDice: React.FC = () => {
                        multiplier.toFixed(1)}x
                     </div>
                   </div>
-                  <div className="bg-[#1a2c38] rounded-lg p-4 text-center">
+                  <div className="bg-[#1a2c38] rounded-lg p-3 text-center">
                     <div className="text-sm text-gray-400 mb-2">Roll {direction === 'under' ? 'Under' : 'Over'}</div>
                     <div className="text-xl font-bold text-white">{target}</div>
                   </div>
-                  <div className="bg-[#1a2c38] rounded-lg p-4 text-center">
+                  <div className="bg-[#1a2c38] rounded-lg p-3 text-center">
                     <div className="text-sm text-gray-400 mb-2">Win Chance</div>
                     <div className="text-xl font-bold text-green-400">
                       {(direction === 'under' ? target : (100 - target)).toFixed(1)}%
@@ -656,14 +662,42 @@ const EdgeDice: React.FC = () => {
                   </div>
                 </div>
 
+                {/* Turbo Toggle */}
+                <div className="bg-[#1a2c38] rounded-lg p-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-400">Turbo</span>
+                    <button
+                      onClick={() => {
+                        if (turboSpeed === 'fast') {
+                          setTurboSpeed('ultra');
+                        } else if (turboSpeed === 'ultra') {
+                          setTurboSpeed('instant');
+                        } else if (turboSpeed === 'instant') {
+                          setTurboSpeed('fast');
+                        }
+                      }}
+                      className={`px-3 py-1 rounded text-xs font-bold transition-colors ${
+                        turboSpeed === 'fast' ? 'bg-gray-600 text-gray-300 hover:bg-gray-500' :
+                        turboSpeed === 'ultra' ? 'bg-orange-500 text-white hover:bg-orange-600' :
+                        'bg-red-500 text-white hover:bg-red-600'
+                      }`}
+                      title="Click to cycle turbo speeds (Ctrl+T to disable)"
+                    >
+                      {turboSpeed === 'fast' ? 'Off' :
+                       turboSpeed === 'ultra' ? 'Ultra' :
+                       'Instant'}
+                    </button>
+                  </div>
+                </div>
+
                 {/* Bet Amount */}
-                <div className="bg-[#1a2c38] rounded-lg p-6">
-                  <div className="flex items-center justify-between mb-4">
+                <div className="bg-[#1a2c38] rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-2">
                     <span className="text-lg text-gray-400">Bet Amount</span>
                     <span className="text-lg text-gray-400">{selectedCurrency}0.00</span>
                   </div>
 
-                  <div className="flex items-center space-x-3 mb-6">
+                  <div className="flex items-center space-x-3 mb-3">
                     <Input
                       type="number"
                       value={betAmount}
@@ -688,7 +722,7 @@ const EdgeDice: React.FC = () => {
                   </div>
 
                   {/* Quick Bet Buttons */}
-                  <div className="grid grid-cols-5 gap-3 mb-4">
+                  <div className="grid grid-cols-5 gap-3 mb-2">
                     {[0.01, 0.10, 1.00, 10.00, 100.00].map((amount) => (
                       <Button
                         key={amount}
@@ -734,7 +768,7 @@ const EdgeDice: React.FC = () => {
 
                 {/* Auto Progress Display - Mobile Only */}
                 {gameMode === 'auto' && autoProgress.isRunning && !isDesktop && (
-                  <div className="bg-[#2d3748] rounded-lg p-3 mt-4">
+                  <div className="bg-[#2d3748] rounded-lg p-3 mt-2">
                     <div className="text-center mb-2">
                       <div className="text-[#00d4ff] font-semibold">Auto Bet Progress</div>
                       <div className="text-sm text-gray-400">
@@ -755,7 +789,7 @@ const EdgeDice: React.FC = () => {
                                     isRunningRef.current = false
                                   } : placeBet}
                 disabled={(!autoProgress.isRunning && (isRolling || betAmount <= 0)) || (autoProgress.isRunning && !autoSettings.enabled)}
-                  className="w-full bg-green-500 hover:bg-green-600 text-white text-lg sm:text-xl font-semibold py-4 sm:py-6 rounded-lg min-h-[60px] flex items-center justify-center"
+                  className="w-full bg-green-500 hover:bg-green-600 text-white text-lg sm:text-xl font-semibold py-3 sm:py-4 rounded-lg min-h-[56px] flex items-center justify-center"
                 >
                   {autoProgress.isRunning ? (
                     <div className="flex items-center">
@@ -799,20 +833,26 @@ const EdgeDice: React.FC = () => {
 
                 {/* Result Display */}
                 {(isTicking || showResult) && (
-                  <div className="bg-[#1a2c38] rounded-lg p-8 text-center">
-                    <div className="text-lg text-gray-400 mb-4">
-                      {isTicking ? 'Rolling...' : 'Result'}
-                    </div>
-                    <div className="text-6xl font-bold mb-4">
+                  <div className="bg-[#1a2c38] rounded-lg p-3 sm:p-4 overflow-visible min-h-[140px] sm:min-h-[160px] flex flex-col">
+                    {isTicking ? (
+                      <div className="text-sm sm:text-lg text-gray-400 mb-2 sm:mb-4 text-center hidden sm:block">
+                        Rolling...
+                      </div>
+                    ) : (
+                      <div className="text-sm sm:text-lg text-gray-400 mb-2 sm:mb-4 text-center hidden sm:block">
+                        Result
+                      </div>
+                    )}
+                    <div className="text-2xl sm:text-4xl font-bold mb-2 sm:mb-4 text-center">
                       {isTicking ? (
-                        <div className="flex justify-center">
+                        <div className="flex justify-center items-center flex-wrap gap-1 sm:gap-2 overflow-x-auto px-2">
                           {tickerValues.map((value, index) => (
                             <motion.div
                               key={index}
-                              initial={{ opacity: 0, y: 20, scale: 0.8 }}
+                              initial={{ opacity: 0, y: 10, scale: 0.8 }}
                               animate={{ opacity: 1, y: 0, scale: 1 }}
                               transition={{ duration: 0.2 }}
-                              className="text-6xl bg-gradient-to-b from-[#00d4ff] to-[#0099cc] px-6 py-3 rounded-xl border-2 border-[#00d4ff]/50"
+                              className="text-2xl sm:text-4xl bg-gradient-to-b from-[#00d4ff] to-[#0099cc] px-2 sm:px-4 py-1 sm:py-2 rounded-lg border-2 border-[#00d4ff]/50 flex-shrink-0"
                             >
                               {value}
                             </motion.div>
@@ -1046,14 +1086,14 @@ const EdgeDice: React.FC = () => {
               {/* Live Ticker Animation - Moved up for mobile visibility */}
               {(isTicking || showResult) && (
                 <div className="bg-[#1a2c38] rounded-lg p-2 mb-2 border border-[#00d4ff]/30 relative overflow-hidden" style={{ height: '120px' }}>
-                  <div className="absolute inset-0 flex flex-col justify-start -mt-2">
+                  <div className="absolute inset-0 flex flex-col justify-center">
                     <div className="text-xs text-gray-500 mb-2 text-center">
-                      {isTicking ? 'Rolling...' : ''}
+                      {''}
                     </div>
                     <div className="flex flex-col space-y-9 flex-1">
                       <div className="text-xl font-bold h-8">
                         {isTicking ? (
-                          <div className="flex justify-center items-center min-h-[60px] relative">
+                          <div className="flex justify-center items-center min-h-[60px] relative py-8">
                             <motion.div
                               className="flex justify-center items-center space-x-1"
                               initial={{ scale: 0.8, opacity: 0 }}
@@ -1192,14 +1232,42 @@ const EdgeDice: React.FC = () => {
                 </div>
               </div>
 
+              {/* Turbo Toggle */}
+              <div className="bg-[#1a2c38] rounded-lg p-1.5 mt-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-400">Turbo</span>
+                  <button
+                    onClick={() => {
+                      if (turboSpeed === 'fast') {
+                        setTurboSpeed('ultra');
+                      } else if (turboSpeed === 'ultra') {
+                        setTurboSpeed('instant');
+                      } else if (turboSpeed === 'instant') {
+                        setTurboSpeed('fast');
+                      }
+                    }}
+                    className={`px-2 py-0.5 rounded text-xs font-bold transition-colors ${
+                      turboSpeed === 'fast' ? 'bg-gray-600 text-gray-300 hover:bg-gray-500' :
+                      turboSpeed === 'ultra' ? 'bg-orange-500 text-white hover:bg-orange-600' :
+                      'bg-red-500 text-white hover:bg-red-600'
+                    }`}
+                    title="Click to cycle turbo speeds (Ctrl+T to disable)"
+                  >
+                    {turboSpeed === 'fast' ? 'Off' :
+                     turboSpeed === 'ultra' ? 'Ultra' :
+                     'Inst'}
+                  </button>
+                </div>
+              </div>
+
               {/* Bet Amount - Stake Style */}
-              <div className="bg-[#1a2c38] rounded-lg p-3">
-                <div className="flex items-center justify-between mb-2">
+              <div className="bg-[#1a2c38] rounded-lg p-2">
+                <div className="flex items-center justify-between mb-1">
                   <span className="text-xs text-gray-400">Bet Amount</span>
                   <span className="text-xs text-gray-400">{selectedCurrency}0.00</span>
                 </div>
 
-                <div className="flex items-center space-x-2 mb-4">
+                <div className="flex items-center space-x-2 mb-3">
                   <Input
                     type="number"
                     value={betAmount}
@@ -1224,7 +1292,7 @@ const EdgeDice: React.FC = () => {
                 </div>
 
                 {/* Quick Bet Buttons */}
-                <div className="grid grid-cols-5 gap-2 mb-4">
+                <div className="grid grid-cols-5 gap-2 mb-2">
                   {[0.01, 0.10, 1.00, 10.00, 100.00].map((amount) => (
                     <Button
                       key={amount}
@@ -1275,7 +1343,7 @@ const EdgeDice: React.FC = () => {
                     isRunningRef.current = false
                   } : placeBet}
                   disabled={(!autoProgress.isRunning && (isRolling || betAmount <= 0)) || (autoProgress.isRunning && !autoSettings.enabled)}
-                  className="w-full bg-green-500 hover:bg-green-600 text-white text-sm sm:text-lg font-semibold py-3 sm:py-4 rounded-lg min-h-[48px] flex items-center justify-center"
+                  className="w-full bg-green-500 hover:bg-green-600 text-white text-sm sm:text-lg font-semibold py-2 sm:py-3 rounded-lg min-h-[44px] flex items-center justify-center"
                 >
                   {autoProgress.isRunning ? (
                     <div className="flex items-center">
@@ -1564,6 +1632,32 @@ const EdgeDice: React.FC = () => {
                   )}
                 </div>
 
+                {/* Turbo Mode */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-sm text-gray-400">Enable Turbo</label>
+                    <input
+                      type="checkbox"
+                      checked={autoSettings.turboEnabled}
+                      onChange={(e) => setAutoSettings(prev => ({ ...prev, turboEnabled: e.target.checked }))}
+                      className="w-4 h-4"
+                    />
+                  </div>
+                  {autoSettings.turboEnabled && (
+                    <div className="space-y-2">
+                      <label className="text-xs text-gray-500 block">Turbo Speed</label>
+                      <select
+                        value={autoSettings.turboSpeed}
+                        onChange={(e) => setAutoSettings(prev => ({ ...prev, turboSpeed: e.target.value as 'fast' | 'ultra' | 'instant' }))}
+                        className="w-full bg-[#2d3748] border-[#374151] text-white text-sm rounded px-3 py-2"
+                      >
+                        <option value="fast">Fast (200ms)</option>
+                        <option value="ultra">Ultra (1ms)</option>
+                        <option value="instant">Instant (0ms)</option>
+                      </select>
+                    </div>
+                  )}
+                </div>
 
                 <div className="flex space-x-3 pt-4">
                   <Button
