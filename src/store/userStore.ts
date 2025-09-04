@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import { User, Transaction, Achievement } from '@/types'
+import { supabase } from '@/lib/supabase'
 
 interface UserState {
   user: User | null
@@ -88,7 +89,20 @@ export const useUserStore = create<UserState>()(
       setSelectedCurrency: (currency) =>
         set({ selectedCurrency: currency }),
 
-      logout: () =>
+      logout: async () => {
+        // Sign out from Supabase first
+        try {
+          const { error } = await supabase.auth.signOut()
+          if (error) {
+            console.error('Supabase logout error:', error)
+          } else {
+            console.log('Successfully signed out from Supabase')
+          }
+        } catch (err) {
+          console.error('Error during Supabase logout:', err)
+        }
+        
+        // Clear local state
         set({
           user: null,
           isAuthenticated: false,
@@ -96,7 +110,8 @@ export const useUserStore = create<UserState>()(
           achievements: [],
           showLiveSupport: false,
           selectedCurrency: 'SC'
-        }),
+        })
+      },
     }),
     {
       name: 'user-storage',

@@ -4,6 +4,8 @@ import { persist, createJSONStorage } from 'zustand/middleware'
 interface UIState {
   // Modal states
   showAuthModal: boolean
+  showSignupModal: boolean
+  showLoginModal: boolean
   showWalletModal: boolean
   showPackDrawModal: boolean
   showSettingsModal: boolean
@@ -27,6 +29,8 @@ interface UIState {
   
   // Actions
   setAuthModal: (show: boolean) => void
+  setSignupModal: (show: boolean) => void
+  setLoginModal: (show: boolean) => void
   setWalletModal: (show: boolean) => void
   setPackDrawModal: (show: boolean) => void
   setSettingsModal: (show: boolean) => void
@@ -59,6 +63,8 @@ export const useUIStore = create<UIState>()(
     (set, get) => ({
       // Modal states
       showAuthModal: false,
+      showSignupModal: false,
+      showLoginModal: false,
       showWalletModal: false,
       showPackDrawModal: false,
       showSettingsModal: false,
@@ -82,6 +88,8 @@ export const useUIStore = create<UIState>()(
 
       // Actions
       setAuthModal: (show) => set({ showAuthModal: show }),
+      setSignupModal: (show) => set({ showSignupModal: show }),
+      setLoginModal: (show) => set({ showLoginModal: show }),
       setWalletModal: (show) => set({ showWalletModal: show }),
       setPackDrawModal: (show) => set({ showPackDrawModal: show }),
       setSettingsModal: (show) => set({ showSettingsModal: show }),

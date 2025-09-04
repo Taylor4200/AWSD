@@ -19,6 +19,10 @@ export interface User {
   referredBy?: string
   isGhostMode: boolean
   role?: 'user' | 'admin' | 'moderator'
+  country?: string // Country for compliance and skill testing
+  state?: string // State/Province for compliance
+  dateOfBirth?: string // Date of birth for age verification
+  emailConfirmed?: boolean // Whether user has confirmed their email
 }
 
 // Game types

@@ -97,7 +97,10 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ isOpen, onToggle }) => {
       label: 'Logout',
       icon: LogOut,
       description: 'Sign out of your account',
-      onClick: logout
+      onClick: async () => {
+        await logout()
+        onToggle() // Close dropdown
+      }
     }
   ]
 

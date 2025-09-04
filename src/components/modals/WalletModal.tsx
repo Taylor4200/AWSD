@@ -24,6 +24,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { useUserStore } from '@/store/userStore'
 import { formatCurrency } from '@/lib/utils'
+import SkillTestingModal from './SkillTestingModal'
 
 interface WalletModalProps {
   isOpen: boolean
@@ -48,6 +49,11 @@ const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose }) => {
   const [depositAmount, setDepositAmount] = useState('')
   const [withdrawAmount, setWithdrawAmount] = useState('')
   const [selectedCurrency, setSelectedCurrency] = useState<'GC' | 'SC'>('SC')
+  const [showSkillTesting, setShowSkillTesting] = useState(false)
+  const [pendingWithdrawal, setPendingWithdrawal] = useState<{
+    amount: number
+    currency: 'GC' | 'SC'
+  } | null>(null)
 
   // Purchase packages with GC and "free" SC
   const purchasePackages = [
@@ -205,22 +211,66 @@ const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose }) => {
     }
   }
 
+  // Check if skill testing is required for user's country
+  const requiresSkillTesting = (country: string) => {
+    const skillTestingCountries = [
+      'Canada',
+      'Australia',
+      'United Kingdom',
+      'Germany',
+      'Austria',
+      'Switzerland',
+      'Netherlands',
+      'Belgium',
+      'Ireland',
+      'Denmark',
+      'Sweden',
+      'Norway',
+      'Finland'
+    ]
+    return skillTestingCountries.includes(country)
+  }
+
   const handleWithdraw = () => {
     const amount = parseFloat(withdrawAmount)
     if (amount > 0 && amount <= (user?.balance || 0)) {
-      const newTransaction: Transaction = {
-        id: Date.now().toString(),
-        type: 'withdrawal',
-        amount: -amount,
-        currency: selectedCurrency,
-        status: 'pending',
-        description: `Withdrawal ${selectedCurrency}`,
-        time: new Date(),
-        balanceAfter: (user?.balance || 0) - amount
+      // Check if skill testing is required
+      if (user?.country && requiresSkillTesting(user.country) && selectedCurrency === 'SC') {
+        setPendingWithdrawal({ amount, currency: selectedCurrency })
+        setShowSkillTesting(true)
+      } else {
+        // Proceed with withdrawal directly
+        processWithdrawal(amount, selectedCurrency)
       }
-      setTransactions(prev => [newTransaction, ...prev])
-      setWithdrawAmount('')
     }
+  }
+
+  const processWithdrawal = (amount: number, currency: 'GC' | 'SC') => {
+    const newTransaction: Transaction = {
+      id: Date.now().toString(),
+      type: 'withdrawal',
+      amount: -amount,
+      currency,
+      status: 'pending',
+      description: `Withdrawal ${currency}`,
+      time: new Date(),
+      balanceAfter: (user?.balance || 0) - amount
+    }
+    setTransactions(prev => [newTransaction, ...prev])
+    setWithdrawAmount('')
+    setPendingWithdrawal(null)
+  }
+
+  const handleSkillTestSuccess = () => {
+    if (pendingWithdrawal) {
+      processWithdrawal(pendingWithdrawal.amount, pendingWithdrawal.currency)
+    }
+    setShowSkillTesting(false)
+  }
+
+  const handleSkillTestClose = () => {
+    setShowSkillTesting(false)
+    setPendingWithdrawal(null)
   }
 
   if (!isOpen) return null
@@ -507,6 +557,18 @@ const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose }) => {
                     </div>
                   </div>
 
+                  {user?.country && requiresSkillTesting(user.country) && selectedCurrency === 'SC' && (
+                    <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3">
+                      <div className="flex items-start space-x-2">
+                        <AlertCircle className="h-4 w-4 text-yellow-400 mt-0.5 flex-shrink-0" />
+                        <div className="text-xs text-yellow-400">
+                          <strong>Skill Testing Required:</strong> As a {user.country} resident, you must pass a skill-testing question
+                          to comply with local gaming regulations before redeeming prizes.
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   <Button
                     onClick={handleWithdraw}
                     disabled={!withdrawAmount || parseFloat(withdrawAmount) < 10 || parseFloat(withdrawAmount) > (user?.balance || 0)}
@@ -560,6 +622,14 @@ const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose }) => {
           </div>
         </motion.div>
       </motion.div>
+
+      {/* Skill Testing Modal */}
+      <SkillTestingModal
+        isOpen={showSkillTesting}
+        onClose={handleSkillTestClose}
+        onSuccess={handleSkillTestSuccess}
+        userCountry={user?.country || ''}
+      />
     </AnimatePresence>
   )
 }

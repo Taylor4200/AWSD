@@ -7,12 +7,16 @@ import ChatSidebar from './ChatSidebar'
 import TopBar from './TopBar'
 import LegalFooter from './LegalFooter'
 import WalletModal from '@/components/modals/WalletModal'
+import SignupModal from '@/components/modals/SignupModal'
+import LoginModal from '@/components/modals/LoginModal'
+import EmailVerificationReminder from '@/components/modals/EmailVerificationReminder'
 import LiveSupportWidget from '@/components/ui/LiveSupportWidget'
 import LiveStatsModal from '@/components/ui/LiveStatsModal'
 import MyBetsModal from '@/components/ui/MyBetsModal'
 import BetHistoryScroll from '@/components/ui/BetHistoryScroll'
 import UserStatsModal from '@/components/modals/UserStatsModal'
 import { useUIStore } from '@/store/uiStore'
+import { useUserStore } from '@/store/userStore'
 
 interface CasinoLayoutProps {
   children: React.ReactNode
@@ -24,11 +28,13 @@ const CasinoLayout: React.FC<CasinoLayoutProps> = ({ children }) => {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
   const [mobileChatOpen, setMobileChatOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
+  const [showEmailVerification, setShowEmailVerification] = useState(false)
   const [userStatsModal, setUserStatsModal] = useState<{ isOpen: boolean; user: any }>({
     isOpen: false,
     user: null
   })
-  const { showWalletModal, setWalletModal, showLiveStatsModal, setLiveStatsModal, showMyBetsModal, setMyBetsModal, showBetHistoryScroll, setBetHistoryScroll } = useUIStore()
+  const { showWalletModal, setWalletModal, showSignupModal, setSignupModal, showLoginModal, setLoginModal, showLiveStatsModal, setLiveStatsModal, showMyBetsModal, setMyBetsModal, showBetHistoryScroll, setBetHistoryScroll } = useUIStore()
+  const { user } = useUserStore()
 
   // Check if mobile on mount
   useEffect(() => {
@@ -39,6 +45,20 @@ const CasinoLayout: React.FC<CasinoLayoutProps> = ({ children }) => {
     window.addEventListener('resize', checkMobile)
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
+
+  // Show email verification reminder for unverified users
+  useEffect(() => {
+    if (user && !user.emailConfirmed) {
+      // Show verification reminder after a short delay
+      const timer = setTimeout(() => {
+        setShowEmailVerification(true)
+      }, 2000) // 2 second delay
+      
+      return () => clearTimeout(timer)
+    } else {
+      setShowEmailVerification(false)
+    }
+  }, [user])
 
   // Keyboard shortcut for toggling sidebar (Ctrl/Cmd + B)
   useEffect(() => {
@@ -187,6 +207,26 @@ const CasinoLayout: React.FC<CasinoLayoutProps> = ({ children }) => {
         onClose={() => setWalletModal(false)}
       />
 
+      {/* Signup Modal */}
+      <SignupModal
+        isOpen={showSignupModal}
+        onClose={() => setSignupModal(false)}
+        onSwitchToLogin={() => {
+          setSignupModal(false)
+          setLoginModal(true)
+        }}
+      />
+
+      {/* Login Modal */}
+      <LoginModal
+        isOpen={showLoginModal}
+        onClose={() => setLoginModal(false)}
+        onSwitchToSignup={() => {
+          setLoginModal(false)
+          setSignupModal(true)
+        }}
+      />
+
       {/* User Stats Modal */}
       {userStatsModal.user && (
         <UserStatsModal
@@ -216,6 +256,16 @@ const CasinoLayout: React.FC<CasinoLayoutProps> = ({ children }) => {
       <BetHistoryScroll
         isOpen={showBetHistoryScroll}
         onClose={() => setBetHistoryScroll(false)}
+      />
+
+      {/* Email Verification Reminder */}
+      <EmailVerificationReminder
+        isOpen={showEmailVerification}
+        onClose={() => setShowEmailVerification(false)}
+        onResendEmail={async () => {
+          // TODO: Implement resend email functionality
+          console.log('Resend email functionality to be implemented')
+        }}
       />
     </div>
   )

@@ -1,169 +1,371 @@
 'use client'
 
 import React from 'react'
-import { motion } from 'framer-motion'
-import { ArrowLeft, Shield, Users, Gift, AlertTriangle } from 'lucide-react'
 import Link from 'next/link'
+import { motion } from 'framer-motion'
+import {
+  Shield,
+  FileText,
+  Users,
+  Gift,
+  AlertTriangle,
+  Lock,
+  Eye,
+  CheckCircle,
+  X,
+  ArrowLeft,
+  DollarSign,
+  Clock,
+  Database,
+  UserCheck,
+  MonitorSpeaker
+} from 'lucide-react'
+import CasinoLayout from '@/components/layout/CasinoLayout'
 
 export default function TermsPage() {
+  const fadeInUp = {
+    initial: { opacity: 0, y: 30 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.6 }
+  }
+
+  const staggerContainer = {
+    animate: {
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  }
+
   return (
-    <div className="min-h-screen bg-[#0f1a2a] text-white">
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
+    <CasinoLayout>
+      <div className="min-h-screen bg-[#0f1419] text-white">
         {/* Header */}
-        <div className="flex items-center mb-8">
-          <Link href="/" className="flex items-center space-x-2 text-[#00d4ff] hover:text-[#00d4ff]/80 transition-colors">
-            <ArrowLeft className="h-5 w-5" />
-            <span>Back to Casino</span>
-          </Link>
+        <div className="bg-gradient-to-r from-[#1a2c38] to-[#2d3748] py-16 px-4">
+          <div className="container mx-auto">
+            <motion.div
+              {...fadeInUp}
+              className="max-w-4xl mx-auto text-center"
+            >
+              <div className="flex items-center justify-center mb-6">
+                <FileText className="w-12 h-12 text-[#00d4ff] mr-4" />
+                <div>
+                  <h1 className="text-4xl md:text-5xl font-bold text-white">
+                    Terms of Service
+                  </h1>
+                  <p className="text-xl text-gray-300 mt-2">
+                    Edge Sweepstakes Platform
+                  </p>
+                </div>
+              </div>
+
+              <p className="text-lg text-gray-300 max-w-3xl mx-auto leading-relaxed">
+                Complete terms and conditions governing your use of Edge sweepstakes platform,
+                including eligibility, gameplay rules, and legal compliance.
+              </p>
+            </motion.div>
+          </div>
         </div>
 
+        {/* Main Content */}
+        <div className="container mx-auto px-4 py-16">
+          {/* Eligibility & Account Section */}
+          <motion.div
+            {...fadeInUp}
+            className="mb-16"
+          >
+            <div className="max-w-4xl mx-auto">
+              <h2 className="text-3xl font-bold mb-8 text-center text-white">
+                Eligibility & Account Requirements
+              </h2>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+                <div className="bg-gradient-to-br from-green-900/20 to-green-800/20 border border-green-500/30 rounded-xl p-6">
+                  <div className="flex items-start gap-4">
+                    <CheckCircle className="w-8 h-8 text-green-400 flex-shrink-0 mt-1" />
+                    <div>
+                      <h3 className="text-xl font-bold text-green-300 mb-3">Who Can Join</h3>
+                      <ul className="text-gray-300 space-y-2 text-sm">
+                        <li>• Must be 18 years or older</li>
+                        <li>• Legal resident of permitted jurisdictions</li>
+                        <li>• Not prohibited by applicable law</li>
+                        <li>• One account per person/household</li>
+                        <li>• Complete identity verification process</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-br from-red-900/20 to-red-800/20 border border-red-500/30 rounded-xl p-6">
+                  <div className="flex items-start gap-4">
+                    <X className="w-8 h-8 text-red-400 flex-shrink-0 mt-1" />
+                    <div>
+                      <h3 className="text-xl font-bold text-red-300 mb-3">Who Cannot Join</h3>
+                      <ul className="text-gray-300 space-y-2 text-sm">
+                        <li>• Under 18 years of age</li>
+                        <li>• Residents of WA, ID, NV, MI</li>
+                        <li>• Current/former Edge employees</li>
+                        <li>• Immediate family members of employees</li>
+                        <li>• Individuals with gambling restrictions</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Anti-AML & KYC Section */}
+          <motion.div
+            {...fadeInUp}
+            className="mb-16"
+          >
+            <div className="max-w-4xl mx-auto">
+              <h2 className="text-3xl font-bold mb-8 text-center text-white">
+                Anti-Money Laundering & KYC Compliance
+              </h2>
+
+              <div className="space-y-6">
+                <div className="bg-gradient-to-r from-purple-900/20 to-purple-800/20 border border-purple-500/30 rounded-xl p-6">
+                  <div className="flex items-start gap-4">
+                    <Lock className="w-8 h-8 text-purple-400 flex-shrink-0 mt-1" />
+                    <div>
+                      <h3 className="text-xl font-bold text-purple-300 mb-3">Know Your Customer (KYC) Requirements</h3>
+                      <ul className="text-gray-300 space-y-2 text-sm leading-relaxed">
+                        <li>• <strong>Identity Verification:</strong> Government-issued photo ID required for all users</li>
+                        <li>• <strong>Address Confirmation:</strong> Valid proof of address (utility bill, bank statement, etc.)</li>
+                        <li>• <strong>Biometric Verification:</strong> Facial recognition or similar technology for account security</li>
+                        <li>• <strong>Source of Funds:</strong> Documentation of legitimate source of funds for large transactions</li>
+                        <li>• <strong>Ongoing Monitoring:</strong> Continuous verification of account activity and behavior patterns</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-r from-blue-900/20 to-blue-800/20 border border-blue-500/30 rounded-xl p-6">
+                  <div className="flex items-start gap-4">
+                    <MonitorSpeaker className="w-8 h-8 text-blue-400 flex-shrink-0 mt-1" />
+                    <div>
+                      <h3 className="text-xl font-bold text-blue-300 mb-3">Transaction Monitoring</h3>
+                      <ul className="text-gray-300 space-y-2 text-sm leading-relaxed">
+                        <li>• <strong>Real-time Analysis:</strong> All transactions monitored for suspicious patterns</li>
+                        <li>• <strong>Threshold Alerts:</strong> Automated alerts for transactions exceeding defined limits</li>
+                        <li>• <strong>Risk Assessment:</strong> Individual and aggregate risk scoring for all accounts</li>
+                        <li>• <strong>Unusual Activity Detection:</strong> AI-powered detection of anomalous behavior</li>
+                        <li>• <strong>Manual Review:</strong> Human oversight of high-risk transactions and accounts</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-r from-orange-900/20 to-orange-800/20 border border-orange-500/30 rounded-xl p-6">
+                  <div className="flex items-start gap-4">
+                    <Database className="w-8 h-8 text-orange-400 flex-shrink-0 mt-1" />
+                    <div>
+                      <h3 className="text-xl font-bold text-orange-300 mb-3">Record Keeping & Reporting</h3>
+                      <ul className="text-gray-300 space-y-2 text-sm leading-relaxed">
+                        <li>• <strong>Transaction Records:</strong> Minimum 5-year retention of all transaction data</li>
+                        <li>• <strong>Identity Documents:</strong> Secure storage of all verification documents</li>
+                        <li>• <strong>Suspicious Activity Reports:</strong> Filing with FinCEN within 30 days when required</li>
+                        <li>• <strong>Audit Trail:</strong> Complete documentation of all compliance actions and decisions</li>
+                        <li>• <strong>Data Security:</strong> Bank-level encryption and security measures for all records</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Currency System */}
+          <motion.div
+            {...staggerContainer}
+            className="mb-16"
+          >
+            <h2 className="text-3xl font-bold mb-8 text-center text-white">
+              Currency System & Gameplay
+            </h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {[
+                {
+                  icon: <DollarSign className="w-8 h-8" />,
+                  title: "Gold Coins (GC)",
+                  description: "Play-for-fun currency with no monetary value. Used solely for entertainment and cannot be redeemed for prizes.",
+                  color: "from-yellow-500 to-orange-500",
+                  features: ["No purchase necessary", "Entertainment only", "Cannot be cashed out", "Unlimited gameplay"]
+                },
+                {
+                  icon: <Gift className="w-8 h-8" />,
+                  title: "Sweepstakes Coins (SC)",
+                  description: "Promotional entries that can be redeemed for real prizes. Subject to KYC verification and AML compliance.",
+                  color: "from-green-500 to-teal-500",
+                  features: ["Redeemable for prizes", "1 SC = $1 value", "KYC verification required", "AML monitoring applied"]
+                },
+                {
+                  icon: <Shield className="w-8 h-8" />,
+                  title: "Game Fairness",
+                  description: "All games use certified random number generation with provably fair algorithms.",
+                  color: "from-blue-500 to-cyan-500",
+                  features: ["Certified RNG", "Provably fair", "Independent testing", "No manipulation possible"]
+                },
+                {
+                  icon: <Clock className="w-8 h-8" />,
+                  title: "Prize Redemption",
+                  description: "Minimum redemption of 100 SC ($100). Processing time 3-5 business days after verification.",
+                  color: "from-purple-500 to-indigo-500",
+                  features: ["Min 100 SC redemption", "3-5 day processing", "Multiple payout options", "Tax reporting included"]
+                }
+              ].map((item, index) => (
+                <motion.div
+                  key={index}
+                  {...fadeInUp}
+                  className="bg-gradient-to-br from-gray-900/50 to-gray-800/50 border border-gray-600/30 rounded-xl p-6 hover:border-gray-500/50 transition-all duration-300 group"
+                >
+                  <div className={`inline-flex p-3 rounded-lg bg-gradient-to-r ${item.color} mb-4 group-hover:scale-110 transition-transform duration-300`}>
+                    <div className="text-white">
+                      {item.icon}
+                    </div>
+                  </div>
+
+                  <h3 className="text-lg font-bold text-white mb-3 group-hover:text-cyan-300 transition-colors">
+                    {item.title}
+                  </h3>
+
+                  <p className="text-gray-300 text-sm leading-relaxed mb-4">
+                    {item.description}
+                  </p>
+
+                  <ul className="text-gray-300 text-xs space-y-1">
+                    {item.features.map((feature, idx) => (
+                      <li key={idx}>• {feature}</li>
+                    ))}
+                  </ul>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Prohibited Conduct */}
+          <motion.div
+            {...fadeInUp}
+            className="mb-16"
+          >
+            <div className="max-w-4xl mx-auto">
+              <h2 className="text-3xl font-bold mb-8 text-center text-white">
+                Prohibited Conduct & Account Termination
+              </h2>
+
+              <div className="bg-gradient-to-r from-red-900/20 to-red-800/20 border border-red-500/30 rounded-xl p-6">
+                <div className="flex items-start gap-4">
+                  <AlertTriangle className="w-6 h-6 text-red-400 flex-shrink-0 mt-1" />
+                  <div>
+                    <h3 className="text-lg font-bold text-red-300 mb-2">Violations Resulting in Immediate Termination</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-300">
+                      <ul className="space-y-2">
+                        <li>• Creating multiple accounts</li>
+                        <li>• Using VPNs/proxies to circumvent restrictions</li>
+                        <li>• Automated play or bot usage</li>
+                        <li>• Attempting to manipulate games</li>
+                        <li>• Sharing account credentials</li>
+                      </ul>
+                      <ul className="space-y-2">
+                        <li>• Money laundering activities</li>
+                        <li>• Fraudulent transactions</li>
+                        <li>• Providing false information</li>
+                        <li>• Violating AML/KYC requirements</li>
+                        <li>• Any form of system abuse</li>
+                      </ul>
+                    </div>
+                    <p className="text-red-300 text-sm font-semibold mt-4">
+                      Violation of these terms may result in immediate account suspension, forfeiture of all coins,
+                      and potential legal action. All violations are reported to relevant authorities as required by law.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Legal Notices */}
+          <motion.div
+            {...fadeInUp}
+            className="max-w-4xl mx-auto"
+          >
+            <h2 className="text-3xl font-bold mb-8 text-center text-white">
+              Important Legal Notices
+            </h2>
+
+            <div className="space-y-6">
+              <div className="bg-gradient-to-r from-yellow-900/20 to-yellow-800/20 border border-yellow-500/30 rounded-xl p-6">
+                <div className="flex items-start gap-4">
+                  <AlertTriangle className="w-6 h-6 text-yellow-400 flex-shrink-0 mt-1" />
+                  <div>
+                    <h3 className="text-lg font-bold text-yellow-300 mb-2">No Purchase Necessary</h3>
+                    <p className="text-yellow-200 text-sm leading-relaxed">
+                      NO PURCHASE NECESSARY. VOID WHERE PROHIBITED. This is a sweepstakes platform.
+                      Players can participate without making any purchase. Gold Coins have no monetary value.
+                      Sweepstakes Coins are promotional entries only.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-r from-cyan-900/20 to-cyan-800/20 border border-cyan-500/30 rounded-xl p-6">
+                <div className="flex items-start gap-4">
+                  <AlertTriangle className="w-6 h-6 text-cyan-400 flex-shrink-0 mt-1" />
+                  <div>
+                    <h3 className="text-lg font-bold text-cyan-300 mb-2">Service Disclaimers</h3>
+                    <ul className="text-cyan-200 text-sm leading-relaxed space-y-1">
+                      <li>• No guarantees of winning or specific outcomes</li>
+                      <li>• Service provided "as is" without warranties</li>
+                      <li>• Edge reserves the right to modify terms at any time</li>
+                      <li>• Limited liability for any damages or losses</li>
+                      <li>• Participation constitutes acceptance of these terms</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Contact Information */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="bg-[#1a2c38] rounded-lg shadow-2xl p-8"
+          {...fadeInUp}
+          className="container mx-auto px-4 pb-8"
         >
-          <div className="flex items-center space-x-3 mb-6">
-            <Shield className="h-8 w-8 text-[#00d4ff]" />
-            <h1 className="text-3xl font-bold">Terms of Service & Sweepstakes Rules</h1>
-          </div>
+          <div className="max-w-4xl mx-auto text-center">
+            <h2 className="text-3xl font-bold mb-8 text-white">
+              Questions About Terms?
+            </h2>
 
-          <div className="space-y-8">
-            {/* Eligibility Section */}
-            <section>
-              <h2 className="text-2xl font-semibold text-[#00d4ff] mb-4 flex items-center">
-                <Users className="h-6 w-6 mr-2" />
-                Eligibility Requirements
-              </h2>
-              <div className="bg-[#2d3748] rounded-lg p-4 space-y-3">
-                <p>• Must be 18 years of age or older</p>
-                <p>• Must be a resident of permitted jurisdictions</p>
-                <p>• <strong>Excluded States:</strong> Washington, Idaho, Nevada, Michigan</p>
-                <p>• One account per person/household</p>
-                <p>• Employees and immediate family members of EDGE Casino are not eligible</p>
-              </div>
-            </section>
-
-            {/* Currency System */}
-            <section>
-              <h2 className="text-2xl font-semibold text-[#00d4ff] mb-4 flex items-center">
-                <Gift className="h-6 w-6 mr-2" />
-                Currency System
-              </h2>
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="bg-[#2d3748] rounded-lg p-4">
-                  <h3 className="text-lg font-semibold text-yellow-400 mb-2">Gold Coins (GC)</h3>
-                  <ul className="space-y-2 text-sm">
-                    <li>• Play-for-fun currency only</li>
-                    <li>• No real monetary value</li>
-                    <li>• Used solely for entertainment</li>
-                    <li>• Cannot be redeemed for prizes</li>
-                  </ul>
-                </div>
-                <div className="bg-[#2d3748] rounded-lg p-4">
-                  <h3 className="text-lg font-semibold text-green-400 mb-2">Sweepstakes Coins (SC)</h3>
-                  <ul className="space-y-2 text-sm">
-                    <li>• Promotional sweepstakes entries</li>
-                    <li>• Redeemable for prizes</li>
-                    <li>• Fixed redemption rate: 1 SC = $1</li>
-                    <li>• Subject to KYC verification</li>
-                  </ul>
-                </div>
-              </div>
-            </section>
-
-            {/* Free Entry Method */}
-            <section>
-              <h2 className="text-2xl font-semibold text-[#00d4ff] mb-4">Free Alternative Method of Entry (AMOE)</h2>
-              <div className="bg-[#2d3748] rounded-lg p-4 space-y-3">
-                <p><strong>No Purchase Necessary:</strong> You can obtain Sweepstakes Coins without making any purchase.</p>
-                <p><strong>Free Entry Method:</strong> Send a self-addressed, stamped envelope to:</p>
-                <div className="bg-[#1a2c38] rounded p-3 ml-4">
-                  <p>EDGE Casino</p>
-                  <p>Free Entry Request</p>
-                  <p>P.O. Box [Your Address]</p>
-                  <p>Include your name, email, and request for Sweepstakes Coins</p>
-                </div>
-                <p className="text-sm text-gray-300">*Limit one free entry request per envelope per day</p>
-              </div>
-            </section>
-
-            {/* Game Fairness */}
-            <section>
-              <h2 className="text-2xl font-semibold text-[#00d4ff] mb-4">Game Fairness & Random Number Generation</h2>
-              <div className="bg-[#2d3748] rounded-lg p-4 space-y-3">
-                <p>• All games use certified Random Number Generation (RNG)</p>
-                <p>• RNG is independently tested and verified</p>
-                <p>• Game outcomes are completely random and fair</p>
-                <p>• No manipulation of results is possible</p>
-              </div>
-            </section>
-
-            {/* Redemption Rules */}
-            <section>
-              <h2 className="text-2xl font-semibold text-[#00d4ff] mb-4">Prize Redemption Rules</h2>
-              <div className="bg-[#2d3748] rounded-lg p-4 space-y-3">
-                <p>• Minimum redemption: 100 Sweepstakes Coins ($100)</p>
-                <p>• Identity verification required before redemption</p>
-                <p>• KYC (Know Your Customer) process mandatory</p>
-                <p>• Processing time: 3-5 business days</p>
-                <p>• Redemption options: Cash, Gift Cards, Cryptocurrency</p>
-                <p>• Void where prohibited by law</p>
-              </div>
-            </section>
-
-            {/* Prohibited Conduct */}
-            <section>
-              <h2 className="text-2xl font-semibold text-[#00d4ff] mb-4 flex items-center">
-                <AlertTriangle className="h-6 w-6 mr-2" />
-                Prohibited Conduct
-              </h2>
-              <div className="bg-[#2d3748] rounded-lg p-4 space-y-3">
-                <p>• Creating multiple accounts</p>
-                <p>• Using VPNs to circumvent location restrictions</p>
-                <p>• Automated play or bot usage</p>
-                <p>• Attempting to manipulate games or systems</p>
-                <p>• Sharing account credentials</p>
-                <p>• Any form of fraud or abuse</p>
-                <p className="text-red-400"><strong>Violation may result in account termination and forfeiture of all coins.</strong></p>
-              </div>
-            </section>
-
-            {/* Disclaimers */}
-            <section>
-              <h2 className="text-2xl font-semibold text-[#00d4ff] mb-4">Disclaimers & Limitations</h2>
-              <div className="bg-[#2d3748] rounded-lg p-4 space-y-3">
-                <p>• No guarantees of winning or specific outcomes</p>
-                <p>• Service provided "as is" without warranties</p>
-                <p>• Limited liability for any damages</p>
-                <p>• We reserve the right to modify terms at any time</p>
-                <p>• Void where prohibited by law</p>
-                <p>• Participation constitutes acceptance of these terms</p>
-              </div>
-            </section>
-
-            {/* Contact Information */}
-            <section>
-              <h2 className="text-2xl font-semibold text-[#00d4ff] mb-4">Contact Information</h2>
-              <div className="bg-[#2d3748] rounded-lg p-4 space-y-3">
-                <p><strong>For questions about these terms:</strong></p>
-                <p>Email: legal@edgecasino.com</p>
-                <p>Support: support@edgecasino.com</p>
-                <p>Last Updated: {new Date().toLocaleDateString()}</p>
-              </div>
-            </section>
-
-            {/* Official Disclaimer */}
-            <div className="bg-red-900/20 border border-red-500 rounded-lg p-4 mt-8">
-              <p className="text-center font-semibold text-red-400">
-                NO PURCHASE NECESSARY. VOID WHERE PROHIBITED. 
-                SWEEPSTAKES COINS ARE PROMOTIONAL ENTRIES WITH NO MONETARY VALUE. 
-                GOLD COINS ARE FOR ENTERTAINMENT ONLY.
+            <div className="bg-gradient-to-r from-gray-900/50 to-gray-800/50 border border-gray-600/30 rounded-xl p-8">
+              <p className="text-gray-300 mb-6 leading-relaxed">
+                If you have questions about these terms of service or need clarification on any aspect of our platform,
+                our legal and compliance team is here to help.
               </p>
+
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link
+                  href="/support"
+                  className="bg-gradient-to-r from-[#00d4ff] to-[#0099cc] hover:from-[#00d4ff]/90 hover:to-[#0099cc]/90 text-black font-bold px-8 py-3 rounded-lg transition-all duration-300 transform hover:scale-105"
+                >
+                  Contact Support
+                </Link>
+
+                <Link
+                  href="/legal/rules"
+                  className="border-2 border-[#00d4ff]/30 text-[#00d4ff] hover:bg-[#00d4ff]/10 px-8 py-3 rounded-lg transition-all duration-300"
+                >
+                  Official Rules
+                </Link>
+              </div>
             </div>
           </div>
         </motion.div>
+
       </div>
-    </div>
+    </CasinoLayout>
   )
 }

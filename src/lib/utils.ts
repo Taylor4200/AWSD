@@ -193,3 +193,219 @@ export function calculateExperienceToNextLevel(experience: number): number {
   const nextLevelXP = currentLevel * 1000
   return nextLevelXP - experience
 }
+
+// Province/State-specific gambling age requirements (null = prohibited)
+export const PROVINCE_AGE_REQUIREMENTS: Record<string, Record<string, number | null>> = {
+  'Canada': {
+    // Most provinces require 19
+    'British Columbia': 19,
+    'New Brunswick': 19,
+    'Newfoundland and Labrador': 19,
+    'Northwest Territories': 19,
+    'Nova Scotia': 19,
+    'Nunavut': 19,
+    'Ontario': 19,
+    'Prince Edward Island': 19,
+    'Saskatchewan': 19,
+    'Yukon': 19,
+    // Provinces that allow 18
+    'Alberta': 18,
+    'Manitoba': 18,
+    'Quebec': 18
+  },
+  'United States': {
+    // ✅ LEGAL States (as of September 2025)
+    // Most states allow sweepstakes casinos with 21+ age requirement
+    'Alabama': 21,
+    'Alaska': 21,
+    'Arizona': 21,
+    'Arkansas': 21,
+    'California': 21,
+    'Colorado': 21,
+    'Delaware': 21,
+    'Florida': 21,
+    'Georgia': 21,
+    'Hawaii': 21,
+    'Illinois': 21,
+    'Indiana': 21,
+    'Iowa': 21,
+    'Kansas': 21,
+    'Louisiana': 21,
+    'Maine': 21,
+    'Maryland': 21,
+    'Massachusetts': 21,
+    'Minnesota': 21,
+    'Mississippi': 21,
+    'Missouri': 21,
+    'Nebraska': 21,
+    'New Hampshire': 21,
+    'New Mexico': 21,
+    'New York': 21,
+    'North Carolina': 21,
+    'North Dakota': 21,
+    'Ohio': 21,
+    'Oklahoma': 21,
+    'Oregon': 21,
+    'Pennsylvania': 21,
+    'Rhode Island': 21,
+    'South Carolina': 21,
+    'South Dakota': 21,
+    'Tennessee': 21,
+    'Texas': 21,
+    'Utah': 21,
+    'Vermont': 21,
+    'Virginia': 21,
+    'West Virginia': 21,
+    'Wisconsin': 21,
+
+    // ❌ ILLEGAL/Restricted States (as of September 2025)
+    'Connecticut': null,    // Banned by Senate Bill 1235 (2025)
+    'Montana': null,        // Criminalized by Senate Bill 555 (October 2025)
+    'Nevada': null,         // Illegal under gaming laws
+    'New Jersey': null,     // Statewide ban (August 2025)
+    'Washington': null,     // All sweepstakes prohibited
+
+    // ⚠️ AMBIGUOUS States (unclear or evolving legal status)
+    'Idaho': null,          // Cash prizes prohibited, only Gold Coins allowed
+    'Kentucky': null,       // No clear legislation
+    'Michigan': null,       // Previously allowed, now restricted
+    'Wyoming': null         // Ambiguous legal status
+  },
+  'Australia': {
+    // Australia has state-specific requirements
+    'Australian Capital Territory': 18,
+    'New South Wales': 18,
+    'Northern Territory': 18,
+    'Queensland': 18,
+    'South Australia': 18,
+    'Tasmania': 18,
+    'Victoria': 18,
+    'Western Australia': 18
+  }
+}
+
+// Country-specific gambling age requirements (fallback when province not specified)
+export const COUNTRY_AGE_REQUIREMENTS: Record<string, number> = {
+  // North America
+  'United States': 21,
+  'Canada': 19,
+
+  // Europe
+  'United Kingdom': 18,
+  'Germany': 18,
+  'Austria': 18,
+  'Switzerland': 18,
+  'Netherlands': 18,
+  'Belgium': 18,
+  'Ireland': 18,
+  'Denmark': 18,
+  'Sweden': 18,
+  'Norway': 18,
+  'Finland': 18,
+
+  // Asia
+  'Japan': 20,
+  'South Korea': 19,
+  'Singapore': 21,
+
+  // Oceania
+  'Australia': 18,
+  'New Zealand': 20,
+
+  // Default for countries not listed
+  'default': 18
+}
+
+export function getGamblingAgeRequirement(country: string, province?: string): number | null {
+  // Check province-specific requirements first
+  if (province && PROVINCE_AGE_REQUIREMENTS[country]?.[province] !== undefined) {
+    return PROVINCE_AGE_REQUIREMENTS[country][province]
+  }
+
+  // Fallback to country-level requirement
+  return COUNTRY_AGE_REQUIREMENTS[country] || COUNTRY_AGE_REQUIREMENTS.default
+}
+
+export function calculateAge(dateOfBirth: string | Date): number {
+  if (!dateOfBirth) return 0
+
+  const today = new Date()
+  const birthDate = new Date(dateOfBirth)
+
+  // Handle future dates (invalid)
+  if (birthDate > today) {
+    return -1 // Invalid future date
+  }
+
+  let age = today.getFullYear() - birthDate.getFullYear()
+  const monthDiff = today.getMonth() - birthDate.getMonth()
+
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age--
+  }
+
+  return age
+}
+
+export function isLegalGamblingAge(dateOfBirth: string | Date, country?: string, province?: string): boolean {
+  const age = calculateAge(dateOfBirth)
+
+  // Invalid date (future date)
+  if (age === -1) return false
+
+  const minimumAge = getGamblingAgeRequirement(country || '', province)
+
+  // If null, gambling is not allowed in this location
+  if (minimumAge === null) return false
+
+  return age >= minimumAge
+}
+
+export function getAgeVerificationErrorMessage(country?: string, province?: string): string {
+  const minimumAge = getGamblingAgeRequirement(country || '', province)
+
+  let locationName = ''
+  if (province && country) {
+    locationName = ` in ${province}, ${country}`
+  } else if (country) {
+    locationName = ` in ${country}`
+  }
+
+  // Handle prohibited locations
+  if (minimumAge === null) {
+    return `Sweepstakes casinos are not allowed${locationName}.`
+  }
+
+  return `You must be at least ${minimumAge} years old to gamble${locationName}.`
+}
+
+export function validateGamblingAge(dateOfBirth: string | Date, country?: string, province?: string): { isValid: boolean; errorMessage?: string; minimumAge: number | null } {
+  const age = calculateAge(dateOfBirth)
+  const minimumAge = getGamblingAgeRequirement(country || '', province)
+
+  // Invalid date (future date)
+  if (age === -1) {
+    return {
+      isValid: false,
+      errorMessage: 'Please enter a valid date of birth.',
+      minimumAge
+    }
+  }
+
+  // Location is prohibited
+  if (minimumAge === null) {
+    return {
+      isValid: false,
+      errorMessage: getAgeVerificationErrorMessage(country, province),
+      minimumAge: null
+    }
+  }
+
+  const isValid = age >= minimumAge
+
+  return {
+    isValid,
+    errorMessage: isValid ? undefined : getAgeVerificationErrorMessage(country, province),
+    minimumAge
+  }
+}
