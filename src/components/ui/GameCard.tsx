@@ -44,13 +44,24 @@ const GameCard: React.FC<GameCardProps> = ({ game, variant = 'default', onClick,
         onClick={onClick}
       >
         <div className="relative aspect-[3/2] bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg overflow-hidden border border-gray-700 hover:border-[#00d4ff]/50 transition-all duration-300">
-          {/* Background Image Placeholder */}
-          <div className={`absolute inset-0 bg-gradient-to-br ${getCategoryColor(game.category)}`} />
+          {/* Background Image */}
+          {game.image && (
+            <img 
+              src={game.image} 
+              alt={game.name}
+              className="absolute inset-0 w-full h-full object-fill"
+            />
+          )}
           
-          {/* Game-specific visual elements */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-2xl font-bold text-white/80">{game.name.charAt(0)}</div>
-          </div>
+          {/* Fallback gradient background */}
+          <div className={`absolute inset-0 bg-gradient-to-br ${getCategoryColor(game.category)} ${game.image ? 'opacity-0' : ''}`} />
+          
+          {/* Game-specific visual elements - only show if no image */}
+          {!game.image && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-2xl font-bold text-white/80">{game.name.charAt(0)}</div>
+            </div>
+          )}
 
           {/* Badges */}
           <div className="absolute top-2 left-2 flex flex-col space-y-1">
@@ -73,7 +84,7 @@ const GameCard: React.FC<GameCardProps> = ({ game, variant = 'default', onClick,
 
                           {/* Play Button Overlay */}
                 <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <Link href={`/casino/game/${game.id}`}>
+                  <Link href={game.provider === 'EDGE ORIGINALS' ? `/originals/${game.id}` : `/casino/game/${game.id}`}>
                     <Button 
                       variant="default" 
                       size="sm" 
@@ -111,13 +122,24 @@ const GameCard: React.FC<GameCardProps> = ({ game, variant = 'default', onClick,
         onClick={onClick}
       >
         <div className="relative aspect-video bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg overflow-hidden border border-gray-700 hover:border-[#00d4ff]/50 transition-all duration-300">
-          {/* Background Image Placeholder */}
-          <div className={`absolute inset-0 bg-gradient-to-br ${getCategoryColor(game.category)}`} />
+          {/* Background Image */}
+          {game.image && (
+            <img 
+              src={game.image} 
+              alt={game.name}
+              className="absolute inset-0 w-full h-full object-fill"
+            />
+          )}
           
-          {/* Game-specific visual elements */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-4xl font-bold text-white/80">{game.name.charAt(0)}</div>
-          </div>
+          {/* Fallback gradient background */}
+          <div className={`absolute inset-0 bg-gradient-to-br ${getCategoryColor(game.category)} ${game.image ? 'opacity-0' : ''}`} />
+          
+          {/* Game-specific visual elements - only show if no image */}
+          {!game.image && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-4xl font-bold text-white/80">{game.name.charAt(0)}</div>
+            </div>
+          )}
 
           {/* Badges */}
           <div className="absolute top-3 left-3 z-20 flex gap-2">
@@ -143,7 +165,7 @@ const GameCard: React.FC<GameCardProps> = ({ game, variant = 'default', onClick,
 
                           {/* Play Button Overlay */}
                 <div className="absolute inset-0 z-20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <Link href={`/casino/game/${game.id}`}>
+                  <Link href={game.provider === 'EDGE ORIGINALS' ? `/originals/${game.id}` : `/casino/game/${game.id}`}>
                     <Button 
                       variant="default" 
                       size="lg" 
@@ -190,13 +212,24 @@ const GameCard: React.FC<GameCardProps> = ({ game, variant = 'default', onClick,
       onClick={onClick}
     >
       <div className="relative aspect-[3/2] bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg overflow-hidden border border-gray-700 hover:border-[#00d4ff]/50 transition-all duration-300">
-        {/* Background Image Placeholder */}
-        <div className={`absolute inset-0 bg-gradient-to-br ${getCategoryColor(game.category)}`} />
+        {/* Background Image */}
+        {game.image && (
+          <img 
+            src={game.image} 
+            alt={game.name}
+            className="absolute inset-0 w-full h-full object-fill"
+          />
+        )}
         
-        {/* Game-specific visual elements */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-3xl font-bold text-white/80">{game.name.charAt(0)}</div>
-        </div>
+        {/* Fallback gradient background */}
+        <div className={`absolute inset-0 bg-gradient-to-br ${getCategoryColor(game.category)} ${game.image ? 'opacity-0' : ''}`} />
+        
+        {/* Game-specific visual elements - only show if no image */}
+        {!game.image && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="text-3xl font-bold text-white/80">{game.name.charAt(0)}</div>
+          </div>
+        )}
 
         {/* Badges */}
         <div className="absolute top-2 left-2 flex flex-col space-y-1">
@@ -219,7 +252,7 @@ const GameCard: React.FC<GameCardProps> = ({ game, variant = 'default', onClick,
 
                       {/* Play Button Overlay */}
               <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                <Link href={`/casino/game/${game.id}`}>
+                <Link href={game.provider === 'EDGE ORIGINALS' ? `/originals/${game.id}` : `/casino/game/${game.id}`}>
                   <Button 
                     variant="default" 
                     size="lg" 

@@ -25,6 +25,7 @@ import { Input } from '@/components/ui/Input'
 import { useUserStore } from '@/store/userStore'
 import { formatCurrency } from '@/lib/utils'
 import SkillTestingModal from './SkillTestingModal'
+import VaultModal from './VaultModal'
 
 interface WalletModalProps {
   isOpen: boolean
@@ -54,6 +55,42 @@ const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose }) => {
     amount: number
     currency: 'GC' | 'SC'
   } | null>(null)
+  const [showVault, setShowVault] = useState(false)
+  const [customAmount, setCustomAmount] = useState('')
+  const [customCurrency, setCustomCurrency] = useState<'USD' | 'EUR' | 'GBP' | 'CAD'>('USD')
+  const [exchangeRates, setExchangeRates] = useState({
+    USD: 1,
+    EUR: 0.92,
+    GBP: 0.79,
+    CAD: 1.38
+  })
+
+  // Fetch real-time exchange rates
+  useEffect(() => {
+    const fetchExchangeRates = async () => {
+      try {
+        const response = await fetch('https://api.exchangerate-api.com/v4/latest/USD')
+        const data = await response.json()
+        setExchangeRates({
+          USD: 1,
+          EUR: data.rates.EUR,
+          GBP: data.rates.GBP,
+          CAD: data.rates.CAD
+        })
+      } catch (error) {
+        console.log('Using fallback exchange rates')
+        // Fallback rates if API fails
+        setExchangeRates({
+          USD: 1,
+          EUR: 0.92,
+          GBP: 0.79,
+          CAD: 1.38
+        })
+      }
+    }
+
+    fetchExchangeRates()
+  }, [])
 
   // Purchase packages with GC and "free" SC
   const purchasePackages = [
@@ -273,6 +310,61 @@ const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose }) => {
     setPendingWithdrawal(null)
   }
 
+  const handleCustomPurchase = () => {
+    const amount = parseFloat(customAmount)
+    if (amount > 0) {
+      // Calculate conversion rates based on USD equivalent
+      const usdEquivalent = amount / exchangeRates[customCurrency]
+      const gcAmount = usdEquivalent * 1000 // $1 USD = 1000 GC
+      const scAmount = usdEquivalent * 1.025 // $1 USD = 1.025 SC
+      
+      // Create two transactions - one for GC and one for SC
+      const gcTransaction: Transaction = {
+        id: Date.now().toString(),
+        type: 'deposit',
+        amount: gcAmount,
+        currency: 'GC',
+        status: 'completed',
+        description: `Custom Purchase: ${getCurrencySymbol(customCurrency)}${amount} ${customCurrency} (${gcAmount.toLocaleString()} GC)`,
+        time: new Date(),
+        balanceAfter: (user?.gcBalance || 0) + gcAmount
+      }
+      
+      const scTransaction: Transaction = {
+        id: (Date.now() + 1).toString(),
+        type: 'deposit',
+        amount: scAmount,
+        currency: 'SC',
+        status: 'completed',
+        description: `Custom Purchase: ${getCurrencySymbol(customCurrency)}${amount} ${customCurrency} (${scAmount} SC)`,
+        time: new Date(),
+        balanceAfter: (user?.balance || 0) + scAmount
+      }
+      
+      setTransactions(prev => [gcTransaction, scTransaction, ...prev])
+      setCustomAmount('')
+    }
+  }
+
+  const calculateCustomAmount = (inputAmount: string) => {
+    const amount = parseFloat(inputAmount) || 0
+    // Convert to USD equivalent first
+    const usdEquivalent = amount / exchangeRates[customCurrency]
+    const gcAmount = Math.floor(usdEquivalent * 1000) // $1 USD = 1000 GC
+    const scAmount = (usdEquivalent * 1.025).toFixed(2) // $1 USD = 1.025 SC
+    return { gcAmount, scAmount, usdEquivalent }
+  }
+
+  const getCurrencySymbol = (currency: string) => {
+    switch (currency) {
+      case 'USD': return '$'
+      case 'EUR': return '€'
+      case 'GBP': return '£'
+      case 'CAD': return 'C$'
+      default: return '$'
+    }
+  }
+
   if (!isOpen) return null
 
   return (
@@ -287,7 +379,7 @@ const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose }) => {
           initial={{ opacity: 0, scale: 0.8, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.8, y: 20 }}
-          className="bg-[#1a2c38] rounded-lg w-full max-w-2xl max-h-[90vh] overflow-hidden"
+          className="bg-[#1a2c38] rounded-lg w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
         >
           {/* Header */}
           <div className="bg-[#2d3748] p-6 flex items-center justify-between">
@@ -370,7 +462,7 @@ const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose }) => {
           </div>
 
           {/* Content Tabs */}
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 overflow-y-auto">
             {activeTab === 'overview' && (
               <div className="p-6">
                 <div className="flex items-center justify-between mb-4">
@@ -384,7 +476,7 @@ const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose }) => {
                   </Button>
                 </div>
                 
-                <div className="space-y-3 max-h-64 overflow-y-auto">
+                <div className="space-y-3 pb-4">
                   {transactions.slice(0, 5).map((transaction) => (
                     <div key={transaction.id} className="flex items-center justify-between p-3 bg-[#2d3748] rounded-lg">
                       <div className="flex items-center space-x-3">
@@ -408,71 +500,155 @@ const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose }) => {
               </div>
             )}
 
-            {activeTab === 'packages' && (
-              <div className="p-6">
-                <h3 className="text-lg font-semibold text-white mb-4">Purchase Packages</h3>
-                
-                <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 mb-6">
-                  <div className="flex items-start space-x-2">
-                    <Info className="h-4 w-4 text-blue-400 mt-0.5 flex-shrink-0" />
-                    <div className="text-sm text-blue-400">
-                      <strong>Important:</strong> Gold Coins (GC) are for entertainment only and cannot be redeemed for prizes. 
-                      Sweeps Coins (SC) can be redeemed for prizes once you meet the minimum requirements. 
-                      All purchases include both GC and "free" SC as part of our sweepstakes model.
-                    </div>
-                  </div>
-                </div>
+                         {activeTab === 'packages' && (
+               <div className="p-6">
+                 <h3 className="text-lg font-semibold text-white mb-4">Purchase Packages</h3>
+                 
+                 {/* Top Global Disclaimer */}
+                 <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 mb-6">
+                   <div className="flex items-start space-x-2">
+                     <Info className="h-4 w-4 text-blue-400 mt-0.5 flex-shrink-0" />
+                     <div className="text-sm text-blue-400">
+                       <strong>Important:</strong> Gold Coins (GC) are for entertainment only and cannot be redeemed for prizes. 
+                       Sweeps Coins (SC) can be redeemed for prizes once you meet the minimum requirements. 
+                       All purchases include both GC and free SC as part of our sweepstakes model.
+                     </div>
+                   </div>
+                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {purchasePackages.map((pkg) => (
-                    <Card key={pkg.id} className="bg-[#2d3748] border-[#374151] hover:border-[#00d4ff]/50 transition-colors">
-                      <CardContent className="p-4">
-                        <div className="text-center">
-                          {pkg.popular && (
-                            <div className="bg-[#00d4ff] text-black text-xs font-bold px-2 py-1 rounded-full mb-2 inline-block">
-                              MOST POPULAR
-                            </div>
-                          )}
-                          <h4 className="text-lg font-bold text-white mb-2">{pkg.name}</h4>
-                          <div className="text-2xl font-bold text-[#00d4ff] mb-4">${pkg.price}</div>
-                          
-                          <div className="space-y-2 mb-4">
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm text-gray-400">Gold Coins:</span>
-                              <span className="text-sm font-medium text-purple-400">{pkg.gcAmount.toLocaleString()} GC</span>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm text-gray-400">Sweeps Coins:</span>
-                              <span className="text-sm font-medium text-[#00d4ff]">{pkg.scAmount} SC</span>
+                 {/* All Packages Grid */}
+                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-4">
+                   {purchasePackages.map((pkg) => (
+                     <Card key={pkg.id} className="bg-[#2d3748] border-[#374151] hover:border-[#00d4ff]/50 transition-colors">
+                       <CardContent className="p-4">
+                         <div className="text-center">
+                           <div className="h-6 mb-2">
+                             {pkg.popular && (
+                               <div className="bg-[#00d4ff] text-black text-xs font-bold px-2 py-1 rounded-full inline-block">
+                                 MOST POPULAR
+                               </div>
+                             )}
+                           </div>
+                           <h4 className="text-lg font-bold text-white mb-2">{pkg.name}</h4>
+                           <div className="text-2xl font-bold text-[#00d4ff] mb-4">${pkg.price}</div>
+                           
+                           <div className="space-y-3 mb-4">
+                             <div className="flex items-center justify-between p-2 bg-purple-500/10 rounded-lg border border-purple-500/20">
+                               <span className="text-sm text-gray-300">Gold Coins:</span>
+                               <span className="text-sm font-bold text-purple-400">{pkg.gcAmount.toLocaleString()} GC</span>
+                             </div>
+                             <div className="flex items-center justify-between p-2 bg-[#00d4ff]/10 rounded-lg border border-[#00d4ff]/20">
+                               <span className="text-sm text-gray-300">FREE Sweeps Coins:</span>
+                               <span className="text-sm font-bold text-[#00d4ff]">{pkg.scAmount} SC</span>
+                             </div>
+                           </div>
+                           
+                           <Button
+                             onClick={() => {
+                               // Simulate purchase
+                               const newTransaction: Transaction = {
+                                 id: Date.now().toString(),
+                                 type: 'deposit',
+                                 amount: pkg.scAmount,
+                                 currency: 'SC',
+                                 status: 'completed',
+                                 description: `Package Purchase: ${pkg.name}`,
+                                 time: new Date(),
+                                 balanceAfter: (user?.balance || 0) + pkg.scAmount
+                               }
+                               setTransactions(prev => [newTransaction, ...prev])
+                             }}
+                             className="w-full bg-[#00d4ff] text-black hover:bg-[#00d4ff]/90"
+                           >
+                             Purchase Package
+                           </Button>
+                         </div>
+                       </CardContent>
+                     </Card>
+                   ))}
+                 </div>
+
+                                   {/* Custom Package */}
+                  <div className="mt-6">
+                    <h4 className="text-lg font-semibold text-white mb-4">Custom Amount</h4>
+                    <Card className="bg-[#2d3748] border-[#374151] hover:border-[#00d4ff]/50 transition-colors">
+                      <CardContent className="p-6">
+                        <div className="space-y-4">
+                          <div>
+                            <label className="text-sm text-gray-400 mb-2 block">Currency</label>
+                            <div className="grid grid-cols-2 gap-3">
+                              <Button
+                                variant={customCurrency === 'USD' ? 'default' : 'outline'}
+                                onClick={() => setCustomCurrency('USD')}
+                                className={customCurrency === 'USD' ? 'bg-[#00d4ff] text-black' : ''}
+                              >
+                                USD ($)
+                              </Button>
+                              <Button
+                                variant={customCurrency === 'EUR' ? 'default' : 'outline'}
+                                onClick={() => setCustomCurrency('EUR')}
+                                className={customCurrency === 'EUR' ? 'bg-[#00d4ff] text-black' : ''}
+                              >
+                                EUR (€)
+                              </Button>
+                              <Button
+                                variant={customCurrency === 'GBP' ? 'default' : 'outline'}
+                                onClick={() => setCustomCurrency('GBP')}
+                                className={customCurrency === 'GBP' ? 'bg-[#00d4ff] text-black' : ''}
+                              >
+                                GBP (£)
+                              </Button>
+                              <Button
+                                variant={customCurrency === 'CAD' ? 'default' : 'outline'}
+                                onClick={() => setCustomCurrency('CAD')}
+                                className={customCurrency === 'CAD' ? 'bg-[#00d4ff] text-black' : ''}
+                              >
+                                CAD (C$)
+                              </Button>
                             </div>
                           </div>
-                          
+
+                          <div>
+                            <label className="text-sm text-gray-400 mb-2 block">Amount in {customCurrency}</label>
+                            <Input
+                              type="number"
+                              value={customAmount}
+                              onChange={(e) => setCustomAmount(e.target.value)}
+                              placeholder={`Enter amount in ${customCurrency}`}
+                              className="bg-[#2d3748] border-[#374151] text-white"
+                            />
+                          </div>
+
+                          {customAmount && parseFloat(customAmount) > 0 && (
+                            <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4">
+                              <div className="text-center">
+                                <div className="text-sm text-green-400 mb-2">You will receive:</div>
+                                <div className="text-lg font-bold text-white mb-2">
+                                  {calculateCustomAmount(customAmount).gcAmount.toLocaleString()} Gold Coins (GC)
+                                </div>
+                                <div className="text-sm text-[#00d4ff] font-medium">
+                                  + FREE {calculateCustomAmount(customAmount).scAmount} Sweeps Coins (SC)
+                                </div>
+                                <div className="text-xs text-gray-400 mt-2">
+                                  ({getCurrencySymbol(customCurrency)}{parseFloat(customAmount).toFixed(2)} {customCurrency} = ${calculateCustomAmount(customAmount).usdEquivalent.toFixed(2)} USD)
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
                           <Button
-                            onClick={() => {
-                              // Simulate purchase
-                              const newTransaction: Transaction = {
-                                id: Date.now().toString(),
-                                type: 'deposit',
-                                amount: pkg.scAmount,
-                                currency: 'SC',
-                                status: 'completed',
-                                description: `Package Purchase: ${pkg.name}`,
-                                time: new Date(),
-                                balanceAfter: (user?.balance || 0) + pkg.scAmount
-                              }
-                              setTransactions(prev => [newTransaction, ...prev])
-                            }}
+                            onClick={handleCustomPurchase}
+                            disabled={!customAmount || parseFloat(customAmount) <= 0}
                             className="w-full bg-[#00d4ff] text-black hover:bg-[#00d4ff]/90"
                           >
-                            Purchase Package
+                            Purchase Custom Amount
                           </Button>
                         </div>
                       </CardContent>
                     </Card>
-                  ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
             {activeTab === 'deposit' && (
               <div className="p-6">
@@ -584,7 +760,7 @@ const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose }) => {
               <div className="p-6">
                 <h3 className="text-lg font-semibold text-white mb-4">Transaction History</h3>
                 
-                <div className="space-y-3 max-h-96 overflow-y-auto">
+                <div className="space-y-3 pb-4">
                   {transactions.map((transaction) => (
                     <div key={transaction.id} className="flex items-center justify-between p-3 bg-[#2d3748] rounded-lg">
                       <div className="flex items-center space-x-3">
@@ -609,28 +785,34 @@ const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose }) => {
             )}
           </div>
 
-          {/* Footer */}
-          <div className="p-6 border-t border-[#374151] text-center">
-            <Button
-              variant="outline"
-              onClick={onClose}
-              className="text-[#00d4ff] border-[#00d4ff] hover:bg-[#00d4ff] hover:text-black"
-            >
-              <Wallet className="h-4 w-4 mr-2" />
-              Open Wallet
-            </Button>
-          </div>
+                     {/* Footer */}
+                       <div className="p-6 border-t border-[#374151] text-center">
+              <Button
+                variant="outline"
+                onClick={() => setShowVault(true)}
+                className="text-[#00d4ff] border-[#00d4ff] hover:bg-[#00d4ff] hover:text-black"
+              >
+                <Wallet className="h-4 w-4 mr-2" />
+                Open Vault
+              </Button>
+            </div>
         </motion.div>
       </motion.div>
 
-      {/* Skill Testing Modal */}
-      <SkillTestingModal
-        isOpen={showSkillTesting}
-        onClose={handleSkillTestClose}
-        onSuccess={handleSkillTestSuccess}
-        userCountry={user?.country || ''}
-      />
-    </AnimatePresence>
+             {/* Skill Testing Modal */}
+       <SkillTestingModal
+         isOpen={showSkillTesting}
+         onClose={handleSkillTestClose}
+         onSuccess={handleSkillTestSuccess}
+         userCountry={user?.country || ''}
+       />
+
+       {/* Vault Modal */}
+       <VaultModal
+         isOpen={showVault}
+         onClose={() => setShowVault(false)}
+       />
+     </AnimatePresence>
   )
 }
 
