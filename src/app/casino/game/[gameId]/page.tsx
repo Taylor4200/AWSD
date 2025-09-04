@@ -301,12 +301,6 @@ const GamePage: React.FC = () => {
                         </>
                       )}
                     </div>
-                    {game.description && (
-                      <div>
-                        <div className="text-gray-400 mb-1">Description:</div>
-                        <div className="text-white text-xs">{game.description}</div>
-                      </div>
-                    )}
                     {game.tags && game.tags.length > 0 && (
                       <div>
                         <div className="text-gray-400 mb-2">Tags:</div>
