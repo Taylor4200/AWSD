@@ -93,6 +93,15 @@ const EdgePlinko: React.FC = () => {
   // Game history
   const [gameHistory, setGameHistory] = useState<PlinkoResult[]>([])
 
+  // Current game multiplier for display
+  const [currentMultiplier, setCurrentMultiplier] = useState<number | null>(null)
+
+  // Number of balls to drop
+  const [ballCount, setBallCount] = useState<number>(1)
+
+  // Track active balls for proper state management
+  const [activeBallCount, setActiveBallCount] = useState<number>(0)
+
   // Initialize session on component mount
   useEffect(() => {
     initializeSession()
@@ -114,7 +123,7 @@ const EdgePlinko: React.FC = () => {
       options: {
         width: 760,
         height: 570,
-        background: '#0f1728',
+        background: '#1a2c38',
         wireframes: false,
       }
     })
@@ -286,6 +295,7 @@ const EdgePlinko: React.FC = () => {
 
       setGameHistory(prev => [result, ...prev.slice(0, 19)])
       setWon(won)
+      setCurrentMultiplier(multiplier)
       setShowResult(true)
 
       addRoll({
@@ -299,17 +309,44 @@ const EdgePlinko: React.FC = () => {
         gameType: 'Plinko'
       })
 
-      // Reset game after delay
-      setTimeout(() => {
-        setCurrentGame(prev => ({
-          ...prev,
-          gameState: 'betting',
-          isDropping: false
-        }))
-        setWon(null)
-        setShowResult(false)
-        setIsPlaying(false)
-      }, 3000)
+      // Decrement active ball count
+      setActiveBallCount(prev => {
+        const newCount = prev - 1
+
+        // If this was the last ball, handle state reset
+        if (newCount === 0) {
+          // For single balls, reset immediately for spam clicking
+          if (ballCount === 1) {
+            // Reset game state immediately so button reappears
+            setCurrentGame(prevState => ({
+              ...prevState,
+              gameState: 'betting',
+              isDropping: false
+            }))
+            setIsPlaying(false)
+
+            // Keep result display for a short time
+            setTimeout(() => {
+              setWon(null)
+              setShowResult(false)
+            }, 500) // Shorter delay for result display
+          } else {
+            // For multiple balls, use longer delay
+            setTimeout(() => {
+              setCurrentGame(prevState => ({
+                ...prevState,
+                gameState: 'betting',
+                isDropping: false
+              }))
+              setWon(null)
+              setShowResult(false)
+              setIsPlaying(false)
+            }, 3000)
+          }
+        }
+
+        return newCount
+      })
     }
 
     if (engineRef.current) {
@@ -433,36 +470,52 @@ const EdgePlinko: React.FC = () => {
     return randomValue
   }
 
-  // Place bet and start game
+  // Generate provably fair random with specific nonce
+  const generateProvablyFairRandomWithNonce = async (nonce: number): Promise<number> => {
+    const combinedSeed = `${session.serverSeed}-${session.clientSeed}-${nonce}`
+    const encoder = new TextEncoder()
+    const data = encoder.encode(combinedSeed)
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data)
+    const hashArray = Array.from(new Uint8Array(hashBuffer))
+
+    // Convert first 4 bytes to a number between 0 and 1
+    const randomValue = (hashArray[0] << 24 | hashArray[1] << 16 | hashArray[2] << 8 | hashArray[3]) / 0xFFFFFFFF
+    return randomValue
+  }
+
+  // Place bet and start game (supports multiple balls and spam clicking)
   const placeBet = async () => {
-    if (isPlaying || currentGame.gameState !== 'betting' || !engineRef.current) return
+    if (currentGame.gameState !== 'betting' || !engineRef.current) return
+
+    const totalBetAmount = betAmount * ballCount
 
     if (betAmount <= 0) {
       alert('Please enter a valid bet amount')
       return
     }
 
-    if (user && user.balance < betAmount) {
-      alert(`Insufficient ${selectedCurrency} balance`)
+    if (user && user.balance < totalBetAmount) {
+      alert(`Insufficient ${selectedCurrency} balance. You need ${totalBetAmount} but only have ${user.balance}`)
       return
     }
 
-    setIsPlaying(true)
+    // For single balls, allow unlimited simultaneous drops
+    // Only prevent rapid clicking if dropping multiple balls and there are active balls
+    if (ballCount > 1 && activeBallCount > 0) return
 
-    // Increment nonce for this game
-    const newNonce = session.nonce + 1
-    setSession(prev => ({ ...prev, nonce: newNonce }))
+    // For single balls with active balls, don't change game state - just drop the ball
+    if (ballCount === 1 && activeBallCount > 0) {
+      // Don't set isPlaying or change gameState for subsequent single balls
+    } else {
+      setIsPlaying(true)
+      setCurrentGame({
+        ...currentGame,
+        isDropping: true,
+        gameState: 'playing'
+      })
+    }
 
-    setCurrentGame({
-      ...currentGame,
-      isDropping: true,
-      gameState: 'playing'
-    })
-
-    // Generate provably fair random for ball position
-    const randomValue = await generateProvablyFairRandom()
-
-    // Create ball with physics
+    // Create multiple balls
     const canvas = canvasRef.current!
     const ballOffsetRangeX = (760 - 52 * 2) / (3 + currentGame.rows - 1 - 1) * 0.8
     const ballRadius = (24 - currentGame.rows) / 2 * 2
@@ -480,23 +533,44 @@ const EdgePlinko: React.FC = () => {
       16: 0.0364,
     }
 
-    const ball = Matter.Bodies.circle(
-      canvas.width / 2 + (randomValue - 0.5) * ballOffsetRangeX * 2,
-      0,
-      ballRadius,
-      {
-        restitution: 0.8,
-        friction: 0.5,
-        frictionAir: frictionAirByRowCount[currentGame.rows] || 0.0364,
-        collisionFilter: {
-          category: 0x0002,
-          mask: 0x0001
-        },
-        render: { fillStyle: '#ff0000' } // Changed to red like temp-plinko
-      }
-    )
-    ballRef.current = ball
-    Matter.Composite.add(engineRef.current.world, ball)
+    // Pre-calculate nonces for all balls to ensure unique RNG
+    const baseNonce = session.nonce
+    const nonces = Array.from({ length: ballCount }, (_, i) => baseNonce + i + 1)
+
+    // Update session nonce for next bet
+    setSession(prev => ({ ...prev, nonce: baseNonce + ballCount }))
+
+    // Set active ball count
+    setActiveBallCount(ballCount)
+
+    // Drop multiple balls with slight delays
+    for (let i = 0; i < ballCount; i++) {
+      setTimeout(async () => {
+        // Generate provably fair random for each ball position with unique nonce
+        const randomValue = await generateProvablyFairRandomWithNonce(nonces[i])
+
+        // Keep ball drop very close to center to prevent getting stuck
+        const ball = Matter.Bodies.circle(
+          canvas.width / 2 + (randomValue - 0.5) * ballOffsetRangeX * 0.3,
+          0,
+          ballRadius,
+          {
+            restitution: 0.8,
+            friction: 0.5,
+            frictionAir: frictionAirByRowCount[currentGame.rows] || 0.0364,
+            collisionFilter: {
+              category: 0x0002,
+              mask: 0x0001
+            },
+            render: { fillStyle: '#ff0000' }
+          }
+        )
+
+        if (engineRef.current) {
+          Matter.Composite.add(engineRef.current.world, ball)
+        }
+      }, i * 200) // 200ms delay between each ball
+    }
   }
 
   // Generate random client seed
@@ -582,13 +656,6 @@ const EdgePlinko: React.FC = () => {
                   ))}
                 </div>
 
-                {/* Profit on Win */}
-                <div className="flex items-center justify-between text-lg">
-                  <span className="text-gray-400">Avg. Win</span>
-                  <span className="text-green-400 font-semibold">
-                    {formatCurrency(getPotentialWin() - betAmount)} {selectedCurrency}
-                  </span>
-                </div>
               </div>
 
               {/* Game Settings */}
@@ -625,10 +692,10 @@ const EdgePlinko: React.FC = () => {
               </div>
 
               {/* Game Actions */}
-              {currentGame.gameState === 'betting' && (
+              {(currentGame.gameState === 'betting' || ballCount === 1) && (
                 <Button
                   onClick={placeBet}
-                  disabled={isPlaying}
+                  disabled={ballCount > 1 && activeBallCount > 0}
                   className="w-full bg-gradient-to-r from-[#00d4ff] to-[#0099cc] hover:from-[#00d4ff]/90 hover:to-[#0099cc]/90 text-black font-bold py-4 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isPlaying ? (
@@ -637,7 +704,7 @@ const EdgePlinko: React.FC = () => {
                       Dropping...
                     </>
                   ) : (
-                    'Drop Ball'
+                    `Drop ${ballCount} Ball${ballCount > 1 ? 's' : ''}`
                   )}
                 </Button>
               )}
@@ -651,11 +718,104 @@ const EdgePlinko: React.FC = () => {
                 <Shield className="h-5 w-5 mr-2" />
                 Fairness
               </Button>
+
+              {/* Ball Count */}
+              <div className="bg-[#1a2c38] rounded-lg p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-lg text-gray-400">Number of Balls</span>
+                  <span className="text-lg text-gray-400">{ballCount}</span>
+                </div>
+
+                <div className="flex items-center space-x-3 mb-3">
+                  <Input
+                    type="number"
+                    value={ballCount}
+                    onChange={(e) => setBallCount(Math.max(1, parseInt(e.target.value) || 1))}
+                    min="1"
+                    max="10"
+                    className="flex-1 bg-[#2d3748] border-[#374151] text-white text-center text-xl font-semibold h-14"
+                  />
+                  <Button
+                    onClick={() => setBallCount(prev => Math.max(1, prev - 1))}
+                    className="bg-[#2d3748] hover:bg-[#374151] text-white px-4 h-14"
+                  >
+                    -
+                  </Button>
+                  <Button
+                    onClick={() => setBallCount(prev => Math.min(10, prev + 1))}
+                    className="bg-[#2d3748] hover:bg-[#374151] text-white px-4 h-14"
+                  >
+                    +
+                  </Button>
+                </div>
+
+                {/* Quick Ball Count Buttons */}
+                <div className="grid grid-cols-5 gap-3 mb-2">
+                  {[1, 2, 3, 5, 10].map((count) => (
+                    <Button
+                      key={count}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setBallCount(count)}
+                      className={`text-sm h-10 ${ballCount === count ? "bg-[#00d4ff] text-black border-[#00d4ff]" : "border-[#374151] text-gray-300"}`}
+                    >
+                      {count}
+                    </Button>
+                  ))}
+                </div>
+
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-400">Total Bet</span>
+                  <span className="text-white font-semibold">
+                    {formatCurrency(betAmount * ballCount)} {selectedCurrency}
+                  </span>
+                </div>
+              </div>
+
+              {/* Recent Bets */}
+              <div className="bg-[#1a2c38] rounded-lg p-3">
+                <h3 className="text-lg font-semibold text-white mb-3">Recent Bets</h3>
+                <div className="space-y-2 max-h-64 overflow-y-auto">
+                  {gameHistory.slice(0, 10).map((result, index) => (
+                    <div
+                      key={`${result.timestamp.getTime()}-${index}`}
+                      className={`flex items-center justify-between p-2 rounded ${
+                        result.won ? 'bg-green-500/10 border border-green-500/30' : 'bg-red-500/10 border border-red-500/30'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-2">
+                        <div className={`w-3 h-3 rounded-full ${result.won ? 'bg-green-400' : 'bg-red-400'}`} />
+                        <div>
+                          <div className="text-sm font-semibold text-white">
+                            {result.multiplier.toFixed(1)}x
+                          </div>
+                          <div className="text-xs text-gray-400">
+                            {formatCurrency(result.betAmount)} {selectedCurrency}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className={`text-sm font-semibold ${result.won ? 'text-green-400' : 'text-red-400'}`}>
+                          {result.won ? '+' : ''}{formatCurrency(result.payout - result.betAmount)} {selectedCurrency}
+                        </div>
+                        <div className="text-xs text-gray-400">
+                          {result.timestamp.toLocaleTimeString()}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {gameHistory.length === 0 && (
+                    <div className="text-center text-gray-400 py-4">
+                      No recent bets
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
 
                          {/* Center - Plinko Board */}
              <div className="lg:col-span-2">
-               <div className="bg-[#1a2c38] rounded-lg p-6 min-h-[600px] flex flex-col justify-center items-center">
+               <div className="bg-[#1a2c38] rounded-lg p-6 min-h-[300px] pb-12 flex flex-col justify-center items-center">
                  {/* Physics Canvas */}
                  <div className="relative w-full max-w-2xl">
                    <canvas
@@ -666,26 +826,30 @@ const EdgePlinko: React.FC = () => {
                    />
                    
                    {/* Game Result */}
-                   {showResult && won !== null && (
+                   {showResult && won !== null && currentMultiplier !== null && (
                      <motion.div
                        initial={{ opacity: 0, scale: 0.8 }}
                        animate={{ opacity: 1, scale: 1 }}
-                       className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center p-4 rounded-lg border-2 ${
-                         won ? 'bg-green-500/10 border-green-500/30' : 'bg-red-500/10 border-red-500/30'
+                       className={`absolute top-1/4 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center p-6 rounded-lg border-2 z-10 ${
+                         won ? 'bg-green-500/20 border-green-500/50' : 'bg-red-500/20 border-red-500/50'
                        }`}
+                       style={{ backdropFilter: 'blur(8px)' }}
                      >
-                       <div className={`text-2xl font-bold ${won ? 'text-green-400' : 'text-red-400'}`}>
+                       <div className={`text-3xl font-bold ${won ? 'text-green-400' : 'text-red-400'}`}>
                          {won ? 'WIN!' : 'LOSS'}
                        </div>
-                       <div className="text-lg mt-2">
-                         {currentGame.multipliers[Math.floor(Math.random() * currentGame.multipliers.length)]?.toFixed(1)}x
+                       <div className="text-2xl font-semibold mt-2 text-white">
+                         {currentMultiplier.toFixed(1)}x
+                       </div>
+                       <div className={`text-lg mt-1 ${won ? 'text-green-300' : 'text-red-300'}`}>
+                         {formatCurrency(betAmount * currentMultiplier)} {selectedCurrency}
                        </div>
                      </motion.div>
                    )}
                  </div>
                  
                  {/* Bins Display */}
-                 <div className="w-full max-w-2xl mt-4">
+                 <div className="w-full max-w-2xl mt-0">
                    <div
                      className="mx-auto"
                      style={{
@@ -761,8 +925,8 @@ const EdgePlinko: React.FC = () => {
 
             {/* Main Game Container */}
             <div className="px-4 space-y-4 pb-16">
-                             {/* Plinko Board */}
-               <div className="bg-[#1a2c38] rounded-lg p-4 min-h-[400px] flex flex-col justify-center items-center">
+                                             {/* Plinko Board */}
+                <div className="bg-[#1a2c38] rounded-lg p-4 min-h-[250px] pb-16 flex flex-col justify-center items-center">
                  <div className="relative w-full">
                    <canvas
                      ref={canvasRef}
@@ -791,7 +955,7 @@ const EdgePlinko: React.FC = () => {
                  </div>
                  
                  {/* Bins Display */}
-                 <div className="w-full mt-3">
+                 <div className="w-full mt-2">
                    <div
                      className="mx-auto"
                      style={{
@@ -896,6 +1060,59 @@ const EdgePlinko: React.FC = () => {
                 </div>
               </div>
 
+              {/* Ball Count - Mobile */}
+              <div className="bg-[#1a2c38] rounded-lg p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-gray-400">Number of Balls</span>
+                  <span className="text-sm text-gray-400">{ballCount}</span>
+                </div>
+
+                <div className="flex items-center space-x-2 mb-3">
+                  <Input
+                    type="number"
+                    value={ballCount}
+                    onChange={(e) => setBallCount(Math.max(1, parseInt(e.target.value) || 1))}
+                    min="1"
+                    max="10"
+                    className="flex-1 bg-[#2d3748] border-[#374151] text-white text-center text-lg font-semibold h-12"
+                  />
+                  <Button
+                    onClick={() => setBallCount(prev => Math.max(1, prev - 1))}
+                    className="bg-[#2d3748] hover:bg-[#374151] text-white px-3 h-12"
+                  >
+                    -
+                  </Button>
+                  <Button
+                    onClick={() => setBallCount(prev => Math.min(10, prev + 1))}
+                    className="bg-[#2d3748] hover:bg-[#374151] text-white px-3 h-12"
+                  >
+                    +
+                  </Button>
+                </div>
+
+                {/* Quick Ball Count Buttons - Mobile */}
+                <div className="grid grid-cols-5 gap-2 mb-2">
+                  {[1, 2, 3, 5, 10].map((count) => (
+                    <Button
+                      key={count}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setBallCount(count)}
+                      className={`text-xs h-8 ${ballCount === count ? "bg-[#00d4ff] text-black border-[#00d4ff]" : "border-[#374151] text-gray-300"}`}
+                    >
+                      {count}
+                    </Button>
+                  ))}
+                </div>
+
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-400">Total Bet</span>
+                  <span className="text-white font-semibold">
+                    {formatCurrency(betAmount * ballCount)} {selectedCurrency}
+                  </span>
+                </div>
+              </div>
+
               {/* Game Settings */}
               <div className="bg-[#1a2c38] rounded-lg p-3">
                 <h3 className="text-sm font-semibold text-white mb-3">Game Settings</h3>
@@ -932,10 +1149,10 @@ const EdgePlinko: React.FC = () => {
               </div>
 
               {/* Game Actions */}
-              {currentGame.gameState === 'betting' && (
+              {(currentGame.gameState === 'betting' || ballCount === 1) && (
                 <Button
                   onClick={placeBet}
-                  disabled={isPlaying}
+                  disabled={ballCount > 1 && activeBallCount > 0}
                   className="w-full bg-gradient-to-r from-[#00d4ff] to-[#0099cc] hover:from-[#00d4ff]/90 hover:to-[#0099cc]/90 text-black font-bold py-4 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isPlaying ? (
@@ -944,7 +1161,7 @@ const EdgePlinko: React.FC = () => {
                       Dropping...
                     </>
                   ) : (
-                    'Drop Ball'
+                    `Drop ${ballCount} Ball${ballCount > 1 ? 's' : ''}`
                   )}
                 </Button>
               )}
