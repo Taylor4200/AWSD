@@ -25,6 +25,7 @@ import {
 import { Button } from '@/components/ui/Button'
 import { useUserStore } from '@/store/userStore'
 import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
 
 interface AdminStats {
   totalUsers: number
@@ -73,28 +74,27 @@ const AdminPanel = () => {
   const [activeTab, setActiveTab] = useState('dashboard')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [adminPassword, setAdminPassword] = useState('')
+  const [stats, setStats] = useState<AdminStats>({
+    totalUsers: 0,
+    activeUsers: 0,
+    totalRevenue: 0,
+    pendingWithdrawals: 0,
+    activeGames: 0,
+    supportTickets: 0,
+    dailyDeposits: 0,
+    monthlyDeposits: 0,
+    longTermRTP: 96.8,
+    averageBetSize: 0,
+    totalBets: 0,
+    totalWins: 0,
+    jackpotPayouts: 0,
+    newUsersToday: 0,
+    retentionRate: 0,
+    averageSessionTime: 0
+  })
+  const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([])
   const { user } = useUserStore()
   const router = useRouter()
-
-  // Mock admin stats
-  const stats: AdminStats = {
-    totalUsers: 15420,
-    activeUsers: 892,
-    totalRevenue: 2847500,
-    pendingWithdrawals: 23,
-    activeGames: 156,
-    supportTickets: 8,
-    dailyDeposits: 125000,
-    monthlyDeposits: 3200000,
-    longTermRTP: 96.8,
-    averageBetSize: 45.50,
-    totalBets: 12500000,
-    totalWins: 12100000,
-    jackpotPayouts: 450000,
-    newUsersToday: 156,
-    retentionRate: 78.5,
-    averageSessionTime: 23.4
-  }
 
   // Mock news items
   const [newsItems, setNewsItems] = useState<NewsItem[]>([
@@ -147,42 +147,6 @@ const AdminPanel = () => {
     }
   ])
 
-  // Mock recent activity
-  const recentActivity: RecentActivity[] = [
-    {
-      id: '1',
-      type: 'user',
-      action: 'New user registration',
-      user: 'john_doe',
-      time: '2 minutes ago',
-      status: 'completed'
-    },
-    {
-      id: '2',
-      type: 'transaction',
-      action: 'Large withdrawal request',
-      user: 'vip_player',
-      time: '5 minutes ago',
-      status: 'pending'
-    },
-    {
-      id: '3',
-      type: 'game',
-      action: 'New game added',
-      user: 'admin',
-      time: '1 hour ago',
-      status: 'completed'
-    },
-    {
-      id: '4',
-      type: 'support',
-      action: 'High priority ticket',
-      user: 'support_agent',
-      time: '2 hours ago',
-      status: 'pending'
-    }
-  ]
-
   const adminTabs = [
     { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
     { id: 'users', label: 'Users', icon: Users },
@@ -202,6 +166,75 @@ const AdminPanel = () => {
     }
     setIsLoading(false)
   }, [user])
+
+  // Fetch real admin data
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchAdminData()
+    }
+  }, [isAuthenticated])
+
+  const fetchAdminData = async () => {
+    try {
+      // Fetch total users
+      const { count: totalUsers } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
+
+      // Fetch users created today
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      const { count: newUsersToday } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', today.toISOString())
+
+      // Fetch recent user registrations for activity feed
+      const { data: recentUsers } = await supabase
+        .from('profiles')
+        .select('id, email, created_at, display_name')
+        .order('created_at', { ascending: false })
+        .limit(10)
+
+      // Update stats
+      setStats(prev => ({
+        ...prev,
+        totalUsers: totalUsers || 0,
+        newUsersToday: newUsersToday || 0,
+        activeUsers: Math.floor((totalUsers || 0) * 0.15), // Estimate 15% active users
+        retentionRate: 78.5, // Mock retention rate
+        averageSessionTime: 23.4 // Mock session time
+      }))
+
+      // Create recent activity from user registrations
+      const activity: RecentActivity[] = recentUsers?.map((user, index) => ({
+        id: `user-${user.id}`,
+        type: 'user',
+        action: 'New user registration',
+        user: user.display_name || user.email?.split('@')[0] || 'Unknown',
+        time: formatTimeAgo(new Date(user.created_at)),
+        status: 'completed'
+      })) || []
+
+      setRecentActivity(activity)
+    } catch (error) {
+      console.error('Error fetching admin data:', error)
+    }
+  }
+
+  const formatTimeAgo = (date: Date): string => {
+    const now = new Date()
+    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60))
+    
+    if (diffInMinutes < 1) return 'Just now'
+    if (diffInMinutes < 60) return `${diffInMinutes} minutes ago`
+    
+    const diffInHours = Math.floor(diffInMinutes / 60)
+    if (diffInHours < 24) return `${diffInHours} hours ago`
+    
+    const diffInDays = Math.floor(diffInHours / 24)
+    return `${diffInDays} days ago`
+  }
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault()

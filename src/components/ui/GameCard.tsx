@@ -50,6 +50,11 @@ const GameCard: React.FC<GameCardProps> = ({ game, variant = 'default', onClick,
               src={game.image} 
               alt={game.name}
               className="absolute inset-0 w-full h-full object-fill"
+              onError={(e) => {
+                // If image fails to load, hide it and show placeholder
+                e.currentTarget.style.display = 'none'
+                e.currentTarget.nextElementSibling?.classList.remove('opacity-0')
+              }}
             />
           )}
           
@@ -59,7 +64,10 @@ const GameCard: React.FC<GameCardProps> = ({ game, variant = 'default', onClick,
           {/* Game-specific visual elements - only show if no image */}
           {!game.image && (
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="text-2xl font-bold text-white/80">{game.name.charAt(0)}</div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-white/80 mb-2">IMAGE</div>
+                <div className="text-lg font-bold text-white/60">COMING SOON</div>
+              </div>
             </div>
           )}
 
@@ -121,6 +129,11 @@ const GameCard: React.FC<GameCardProps> = ({ game, variant = 'default', onClick,
               src={game.image} 
               alt={game.name}
               className="absolute inset-0 w-full h-full object-fill"
+              onError={(e) => {
+                // If image fails to load, hide it and show placeholder
+                e.currentTarget.style.display = 'none'
+                e.currentTarget.nextElementSibling?.classList.remove('opacity-0')
+              }}
             />
           )}
           
@@ -130,7 +143,10 @@ const GameCard: React.FC<GameCardProps> = ({ game, variant = 'default', onClick,
           {/* Game-specific visual elements - only show if no image */}
           {!game.image && (
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="text-4xl font-bold text-white/80">{game.name.charAt(0)}</div>
+              <div className="text-center">
+                <div className="text-4xl font-bold text-white/80 mb-2">IMAGE</div>
+                <div className="text-2xl font-bold text-white/60">COMING SOON</div>
+              </div>
             </div>
           )}
 
@@ -211,6 +227,11 @@ const GameCard: React.FC<GameCardProps> = ({ game, variant = 'default', onClick,
             src={game.image} 
             alt={game.name}
             className="absolute inset-0 w-full h-full object-fill"
+            onError={(e) => {
+              // If image fails to load, hide it and show placeholder
+              e.currentTarget.style.display = 'none'
+              e.currentTarget.nextElementSibling?.classList.remove('opacity-0')
+            }}
           />
         )}
         
@@ -220,7 +241,10 @@ const GameCard: React.FC<GameCardProps> = ({ game, variant = 'default', onClick,
         {/* Game-specific visual elements - only show if no image */}
         {!game.image && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-3xl font-bold text-white/80">{game.name.charAt(0)}</div>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-white/80 mb-2">IMAGE</div>
+              <div className="text-xl font-bold text-white/60">COMING SOON</div>
+            </div>
           </div>
         )}
 
