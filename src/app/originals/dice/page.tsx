@@ -1,14 +1,15 @@
-'use client'
+﻿'use client'
 
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  Dice1, 
-  Shield, 
-  Target, 
-  Zap, 
+import {
+  Dice1,
+  Shield,
+  Target,
+  Zap,
   TrendingUp,
   RotateCcw,
+  Shuffle,
   Info,
   Settings,
   Copy,
@@ -60,6 +61,19 @@ interface RollHistory {
 const EdgeDice: React.FC = () => {
   const { user, selectedCurrency, setSelectedCurrency } = useUserStore()
   const { setLiveStatsModal } = useUIStore()
+
+  // Screen size detection
+  const [isDesktop, setIsDesktop] = useState(false)
+
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsDesktop(window.innerWidth >= 1024) // lg breakpoint
+    }
+
+    checkScreenSize()
+    window.addEventListener('resize', checkScreenSize)
+    return () => window.removeEventListener('resize', checkScreenSize)
+  }, [])
   const [betAmount, setBetAmount] = useState<number>(0.01)
   const [target, setTarget] = useState<number>(50)
   const [direction, setDirection] = useState<'under' | 'over'>('under')
@@ -68,6 +82,8 @@ const EdgeDice: React.FC = () => {
   const [won, setWon] = useState<boolean | null>(null)
   const [showFairnessModal, setShowFairnessModal] = useState(false)
   const [showSeedsModal, setShowSeedsModal] = useState(false)
+  const [showAutoModal, setShowAutoModal] = useState(false)
+  const [hashedServerSeed, setHashedServerSeed] = useState<string>('')
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [customClientSeed, setCustomClientSeed] = useState('')
   const [copied, setCopied] = useState<string | null>(null)
@@ -82,6 +98,16 @@ const EdgeDice: React.FC = () => {
     winAmount: 100,
     lossAmount: 50
   })
+  const [autoProgress, setAutoProgress] = useState({
+    isRunning: false,
+    currentBet: 0,
+    totalBets: 0,
+    totalProfit: 0,
+    totalLoss: 0
+  })
+
+  // Use ref to track running state for immediate access in loop
+  const isRunningRef = useRef(false)
   
   // Ticker animation state
   const [isTicking, setIsTicking] = useState(false)
@@ -159,12 +185,27 @@ const EdgeDice: React.FC = () => {
     return () => document.removeEventListener('keydown', handleKeyPress)
   }, [hotkeysEnabled, isRolling, isTicking])
 
+  // Update hashed server seed when session changes
+  useEffect(() => {
+    const updateHashedServerSeed = async () => {
+      if (session.serverSeed) {
+        const hash = await getHashedServerSeed(session.serverSeed)
+        setHashedServerSeed(hash)
+      } else {
+        setHashedServerSeed('')
+      }
+    }
+    updateHashedServerSeed()
+  }, [session.serverSeed])
+
   // Adjust target when direction changes to ensure valid range
   useEffect(() => {
     if (direction === 'over' && target < 2) {
       setTarget(2)
     }
   }, [direction, target])
+
+
 
   const initializeSession = async () => {
     const serverSeed = generateServerSeed()
@@ -214,10 +255,10 @@ const EdgeDice: React.FC = () => {
       return
     }
     
-    const duration = gameMode === 'turbo' ? 
-      (turboSpeed === 'ultra' ? 1 : turboSpeed === 'fast' ? 200 : 0) : 500
-    
-    const steps = 50
+    const duration = gameMode === 'turbo' ?
+      (turboSpeed === 'ultra' ? 1 : turboSpeed === 'fast' ? 200 : 0) : (isDesktop ? 500 : 300)
+
+    const steps = isDesktop ? 50 : 30
     const stepDuration = duration / steps
     
     for (let i = 0; i < steps; i++) {
@@ -240,6 +281,14 @@ const EdgeDice: React.FC = () => {
   }
 
   const placeBet = async () => {
+    if (gameMode === 'auto') {
+      await runAutoBets()
+    } else {
+      await placeManualBet()
+    }
+  }
+
+  const placeManualBet = async () => {
     if (betAmount <= 0 || !user) return
 
     // Check if user has enough balance for the selected currency
@@ -250,17 +299,17 @@ const EdgeDice: React.FC = () => {
     }
 
     setIsRolling(true)
-    
+
     // Increment nonce for this roll
     const newNonce = session.nonce + 1
-    
+
     // Generate the roll using provably fair system
     const rollResult = await generateDiceRoll({
       serverSeed: session.serverSeed,
       clientSeed: customClientSeed || session.clientSeed,
       nonce: newNonce
     })
-    
+
          // Convert to 0-100 range for display
      const result = Math.round(rollResult.result)
      const won = direction === 'under' ? result < target : result > target
@@ -268,7 +317,7 @@ const EdgeDice: React.FC = () => {
 
     // Update session with new nonce
     setSession(prev => ({ ...prev, nonce: newNonce }))
-    
+
     // Add to roll history
     const newRoll: RollHistory = {
       result,
@@ -279,16 +328,140 @@ const EdgeDice: React.FC = () => {
       payout,
       timestamp: new Date()
     }
-    
+
     setRollHistory(prev => [newRoll, ...prev.slice(0, 19)]) // Keep last 20 rolls
-    
+
     // Run ticker animation first
     await runTickerAnimation(result)
-    
+
     // Then show the final result
     setCurrentResult(result)
     setWon(won)
     setIsRolling(false)
+  }
+
+  const runAutoBets = async () => {
+    if (!autoSettings.enabled || autoProgress.isRunning) return
+
+    // Update both state and ref
+    setAutoProgress(prev => ({
+      ...prev,
+      isRunning: true,
+      currentBet: 0,
+      totalBets: 0,
+      totalProfit: 0,
+      totalLoss: 0
+    }))
+    isRunningRef.current = true
+
+    // Get starting nonce and increment it for each bet
+    let currentNonce = session.nonce
+
+    for (let i = 0; i < autoSettings.betCount; i++) {
+      // Check if user clicked stop (using ref for immediate access)
+      if (!isRunningRef.current) {
+        break
+      }
+
+      // Check stop conditions
+      if (autoSettings.stopOnWin && autoProgress.totalProfit >= autoSettings.winAmount) {
+        break
+      }
+      if (autoSettings.stopOnLoss && autoProgress.totalLoss >= autoSettings.lossAmount) {
+        break
+      }
+
+      // Place individual bet with unique nonce
+      currentNonce += 1 // Increment nonce for this bet
+      const result = await placeSingleBet(currentNonce)
+
+      // Update progress
+      setAutoProgress(prev => ({
+        ...prev,
+        currentBet: i + 1,
+        totalBets: i + 1,
+        totalProfit: prev.totalProfit + (result.won ? result.payout - betAmount : 0),
+        totalLoss: prev.totalLoss + (result.won ? 0 : betAmount)
+      }))
+
+      // Add delay between bets (except for last bet)
+      if (i < autoSettings.betCount - 1) {
+        await new Promise(resolve => setTimeout(resolve, 1000))
+      }
+    }
+
+    // Update session with final nonce
+    setSession(prev => ({ ...prev, nonce: currentNonce }))
+
+    // Update both state and ref
+    setAutoProgress(prev => ({ ...prev, isRunning: false }))
+    isRunningRef.current = false
+  }
+
+  const placeSingleBet = async (nonce?: number) => {
+    if (betAmount <= 0 || !user) return { won: false, payout: 0 }
+
+    // Check if user has enough balance for the selected currency
+    const userBalance = selectedCurrency === 'SC' ? user.balance : user.gcBalance
+    if (betAmount > userBalance) {
+      return { won: false, payout: 0 }
+    }
+
+    // Use provided nonce or increment current session nonce
+    const rollNonce = nonce !== undefined ? nonce : session.nonce + 1
+
+    // Generate the roll using provably fair system
+    const rollResult = await generateDiceRoll({
+      serverSeed: session.serverSeed,
+      clientSeed: customClientSeed || session.clientSeed,
+      nonce: rollNonce
+    })
+
+    // Convert to 0-100 range for display
+    const result = Math.round(rollResult.result)
+    const won = direction === 'under' ? result < target : result > target
+    const payout = won ? betAmount * calculateMultiplier() : 0
+
+    // Only update session nonce if not using provided nonce (for auto betting)
+    if (nonce === undefined) {
+      setSession(prev => ({ ...prev, nonce: rollNonce }))
+    }
+
+    // Add to roll history
+    const newRoll: RollHistory = {
+      result,
+      won,
+      target,
+      direction,
+      betAmount,
+      payout,
+      timestamp: new Date()
+    }
+
+    setRollHistory(prev => [newRoll, ...prev.slice(0, 19)]) // Keep last 20 rolls
+
+    // Run ticker animation first
+    await runTickerAnimation(result)
+
+    // Then show the final result
+    setCurrentResult(result)
+    setWon(won)
+
+    return { won, payout, result }
+  }
+
+  const getAutoButtonText = () => {
+    let text = `${autoSettings.betCount} bets`
+
+    if (autoSettings.stopOnWin && autoSettings.stopOnLoss) {
+      text += ` (+$${autoSettings.winAmount}/-$${autoSettings.lossAmount})`
+    } else if (autoSettings.stopOnWin) {
+      text += ` (+$${autoSettings.winAmount})`
+    } else if (autoSettings.stopOnLoss) {
+      text += ` (-$${autoSettings.lossAmount})`
+    }
+
+    return `Start Auto ${text}`
   }
 
   const copyToClipboard = async (text: string, type: string) => {
@@ -336,637 +509,806 @@ const EdgeDice: React.FC = () => {
 
   return (
     <CasinoLayout>
-             <div className="min-h-screen bg-[#0f1419] text-white p-4">
-         <div className="max-w-6xl mx-auto">
-          {/* Header */}
-                     <div className="text-center mb-4">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex items-center justify-center space-x-3 mb-4"
-            >
-              <Dice1 className="h-8 w-8 text-[#00d4ff]" />
-              <h1 className="text-4xl font-bold text-white">Edge Dice</h1>
-              <Shield className="h-6 w-6 text-green-400" />
-            </motion.div>
-            <p className="text-gray-400 text-lg">Provably Fair Dice Game • 1% House Edge</p>
-          </div>
+      <div className="min-h-screen bg-[#0f1419] text-white">
+        {isDesktop ? (
+          /* Desktop Layout */
+          <div className="max-w-7xl mx-auto px-4 py-6">
+            {/* Header */}
+            <div className="text-center mb-6">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center justify-center space-x-3 mb-2"
+              >
+                <Dice1 className="h-8 w-8 text-[#00d4ff]" />
+                <h1 className="text-3xl font-bold text-white">Dice</h1>
+              </motion.div>
+            </div>
 
-                     <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-                         {/* Main Game Area */}
-                           <div className="lg:col-span-3 space-y-4">
-                                               {/* Game Board */}
-                <Card variant="glass" className="border-[#2d3748]">
-                  <CardContent className="p-4">
-                    <div className="text-center -mt-8">
-                      {rollHistory.slice(0, 5).map((roll, index) => (
-                        <span
-                          key={index}
-                          className={`inline-block px-2 py-1 rounded text-xs font-medium mx-0.5 ${
-                            roll.won ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+            <div className="grid grid-cols-12 gap-6">
+              {/* Left Panel - Controls */}
+              <div className="col-span-5 space-y-6">
+                {/* Target Slider */}
+                <div className="bg-[#1a2c38] rounded-lg p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-lg text-gray-400">Target</span>
+                    <span className="text-2xl font-bold text-white">{target}</span>
+                  </div>
+
+                  {/* Visual Slider */}
+                  <div className="relative mb-6">
+                    <div className="h-12 bg-gray-600 rounded-lg relative overflow-hidden transition-all duration-300 hover:bg-gray-500">
+                      {/* Win region */}
+                      <div
+                        className={`absolute top-0 h-full transition-all duration-500 ease-out transform hover:scale-105 ${
+                          direction === 'under' ? 'left-0 bg-gradient-to-r from-green-400 to-green-600 shadow-lg shadow-green-500/30' : 'right-0 bg-gradient-to-l from-green-400 to-green-600 shadow-lg shadow-green-500/30'
+                        }`}
+                        style={{
+                          width: `${target}%`,
+                          ...(direction === 'over' && { left: `${100 - target}%` })
+                        }}
+                      />
+                      {/* Loss region */}
+                      <div
+                        className={`absolute top-0 h-full transition-all duration-500 ease-out transform hover:scale-105 ${
+                          direction === 'under' ? 'right-0 bg-gradient-to-l from-red-400 to-red-600 shadow-lg shadow-red-500/30' : 'left-0 bg-gradient-to-r from-red-400 to-red-600 shadow-lg shadow-red-500/30'
+                        }`}
+                        style={{
+                          width: `${100 - target}%`,
+                          ...(direction === 'over' && { left: '0%' })
+                        }}
+                      />
+
+                      {/* Slider handle */}
+                      <div
+                        className="absolute top-1/2 w-8 h-8 bg-white rounded-full shadow-xl transform -translate-y-1/2 border-2 border-gray-300 transition-all duration-300 ease-out hover:scale-110 hover:shadow-2xl cursor-pointer"
+                        style={{ left: `${target}%`, marginLeft: '-16px' }}
+                      >
+                        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-white to-gray-200 animate-pulse opacity-50"></div>
+                      </div>
+
+                      {/* Current result marker */}
+                      {currentResult !== null && !isTicking && (
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0, rotate: -180 }}
+                          animate={{
+                            opacity: 1,
+                            scale: [0, 1.2, 1],
+                            rotate: 0
+                          }}
+                          transition={{
+                            duration: 0.6,
+                            ease: "easeOut",
+                            scale: { times: [0, 0.6, 1] }
+                          }}
+                          className={`absolute top-1/2 w-5 h-5 rounded-full shadow-xl transform -translate-y-1/2 border-2 border-white ${
+                            won ? 'bg-green-400 shadow-green-400/50' : 'bg-red-400 shadow-red-400/50'
                           }`}
+                          style={{ left: `${currentResult}%`, marginLeft: '-10px' }}
                         >
-                          {roll.result}
-                        </span>
-                      ))}
-                      {rollHistory.length === 0 && (
-                        <span className="text-gray-500 text-xs italic">No recent rolls</span>
+                          <div className={`absolute inset-0 rounded-full animate-ping ${
+                            won ? 'bg-green-300' : 'bg-red-300'
+                          } opacity-30`}></div>
+                        </motion.div>
                       )}
                     </div>
-                    {/* Game Mode Tabs */}
-                    <div className="flex flex-wrap gap-2 mb-6">
-                     <Button
-                       variant={gameMode === 'manual' ? "default" : "outline"}
-                       onClick={() => setGameMode('manual')}
-                       className={`text-sm ${gameMode === 'manual' ? 'bg-[#00d4ff] text-black' : ''}`}
-                     >
-                       Manual
-                     </Button>
-                                          <Button
-                        variant={gameMode === 'auto' ? "default" : "outline"}
-                        onClick={() => setGameMode('auto')}
-                        className={`text-sm ${gameMode === 'auto' ? 'bg-[#00d4ff] text-black' : ''}`}
-                      >
-                        <Repeat className="h-4 w-4 mr-1" />
-                        Auto
-                      </Button>
-                     <Button
-                       variant={gameMode === 'turbo' ? "default" : "outline"}
-                       onClick={() => setGameMode('turbo')}
-                       className={`text-sm ${gameMode === 'turbo' ? 'bg-[#00d4ff] text-black' : ''}`}
-                     >
-                       <Zap className="h-4 w-4 mr-1" />
-                       Turbo
-                     </Button>
-                   </div>
 
-                                      {/* Target Slider */}
-                    <div className="mb-6">
-                      <div className="flex items-center justify-between mb-2">
-                        <label className="text-sm font-medium text-gray-300">
-                          Target: {target}
-                        </label>
-                                                 <div className="flex items-center space-x-2">
-                           <span className="text-xs text-gray-400">Win Chance:</span>
-                                                       <span className="text-white text-sm">
-                              {(direction === 'under' ? target : (100 - target)).toFixed(2)}%
-                            </span>
-                         </div>
-                      </div>
-                      
-                                                                    {/* Visual Slider */}
-                        <div className="relative">
-                          <div className="h-8 bg-gradient-to-r from-red-500 to-green-500 rounded-lg relative overflow-hidden">
-                            {/* Red/Green segments - invert based on direction */}
-                            <div 
-                              className={`absolute top-0 left-0 h-full ${isDragging ? 'transition-none' : 'transition-all duration-300 ease-out'}`}
-                              style={{ 
-                                width: `${target}%`,
-                                backgroundColor: direction === 'under' ? '#22c55e' : '#ef4444'
-                              }}
-                            />
-                            <div 
-                              className={`absolute top-0 right-0 h-full ${isDragging ? 'transition-none' : 'transition-all duration-300 ease-out'}`}
-                              style={{ 
-                                width: `${100 - target}%`,
-                                backgroundColor: direction === 'under' ? '#ef4444' : '#22c55e'
-                              }}
-                            />
-                            
-                            {/* Slider handle */}
-                            <div 
-                              className={`absolute top-0 w-1 h-full bg-white shadow-lg ${isDragging ? 'transition-none' : 'transition-all duration-300 ease-out'}`}
-                              style={{ left: `${target}%` }}
-                            />
-                            
-                                                         {/* Ticker marker during animation */}
-                             {isTicking && (
-                               <motion.div
-                                 initial={{ opacity: 0, scale: 0 }}
-                                 animate={{ opacity: 1, scale: 1 }}
-                                 className="absolute top-0 w-8 h-8 rounded-full shadow-2xl border-3 border-white bg-[#00d4ff] ticker-bounce ticker-glow"
-                                 style={{ left: `${tickerPosition}%`, transform: 'translateX(-50%)' }}
-                               >
-                                 <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 text-lg font-bold bg-black/90 px-3 py-1 rounded text-white border border-[#00d4ff]/50 ticker-slide">
-                                   {tickerValues[0]}
-                                 </div>
-                                 <div className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 text-xs font-bold text-[#00d4ff] ticker-bounce">
-                                   ROLLING...
-                                 </div>
-                               </motion.div>
-                             )}
-                             
-                             {/* Current result marker */}
-                             {currentResult !== null && !isTicking && (
-                               <motion.div
-                                 initial={{ opacity: 0, scale: 0 }}
-                                 animate={{ opacity: 1, scale: 1 }}
-                                 className={`absolute top-0 w-6 h-6 rounded-full shadow-2xl border-2 border-white ${
-                                   won ? 'bg-green-500' : 'bg-red-500'
-                                 }`}
-                                 style={{ left: `${currentResult}%`, transform: 'translateX(-50%)' }}
-                               >
-                                 <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 text-sm font-bold bg-black/80 px-2 py-1 rounded text-white">
-                                   {currentResult}
-                                 </div>
-                                 <div className={`absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-xs font-bold ${
-                                   won ? 'text-green-400' : 'text-red-400'
-                                 }`}>
-                                   {won ? 'WIN' : 'LOSS'}
-                                 </div>
-                               </motion.div>
-                             )}
-                          </div>
-                         
-                         {/* Slider input */}
-                                                   <input
-                            type="range"
-                            min={direction === 'over' ? 2 : 1}
-                            max="98"
-                            step="1"
-                            value={target}
-                            onChange={(e) => setTarget(parseInt(e.target.value))}
-                            onMouseDown={() => setIsDragging(true)}
-                            onMouseUp={() => setIsDragging(false)}
-                            onTouchStart={() => setIsDragging(true)}
-                            onTouchEnd={() => setIsDragging(false)}
-                            className="w-full h-8 bg-transparent absolute top-0 left-0 opacity-0 cursor-pointer appearance-none"
-                            style={{
-                              background: 'transparent',
-                              outline: 'none',
-                              WebkitAppearance: 'none',
-                              MozAppearance: 'none'
-                            }}
-                          />
-                        
-                                                 {/* Scale markers */}
-                         <div className="flex justify-between text-xs text-gray-400 mt-2">
-                           <span>{direction === 'over' ? 2 : 1}</span>
-                           <span>25</span>
-                           <span>50</span>
-                           <span>75</span>
-                           <span>98</span>
-                         </div>
-                      </div>
+                    {/* Slider input */}
+                    <input
+                      type="range"
+                      min={direction === 'over' ? 2 : 1}
+                      max="98"
+                      step="1"
+                      value={target}
+                      onChange={(e) => setTarget(parseInt(e.target.value))}
+                      className="w-full h-12 bg-transparent absolute top-0 left-0 opacity-0 cursor-pointer"
+                    />
+
+                    {/* Scale markers */}
+                    <div className="flex justify-between text-sm text-gray-400 mt-3">
+                      <span>0</span>
+                      <span>25</span>
+                      <span>50</span>
+                      <span>75</span>
+                      <span>100</span>
                     </div>
+                  </div>
 
-                                                           {/* Direction Toggle */}
-                     <div className="flex flex-col sm:flex-row gap-2 mb-6">
-                       <Button
-                         variant={direction === 'under' ? "default" : "outline"}
-                         onClick={() => setDirection('under')}
-                         className={`flex-1 text-sm ${direction === 'under' ? 'bg-[#00d4ff] text-black' : ''}`}
-                       >
-                         Roll Under {target}
-                       </Button>
-                       <Button
-                         variant={direction === 'over' ? "default" : "outline"}
-                         onClick={() => setDirection('over')}
-                         className={`flex-1 text-sm ${direction === 'over' ? 'bg-[#00d4ff] text-black' : ''}`}
-                       >
-                         Roll Over {target}
-                       </Button>
-                     </div>
+                  {/* Direction Toggle */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button
+                      variant={direction === 'under' ? "default" : "outline"}
+                      onClick={() => setDirection('under')}
+                      className={`${direction === 'under' ? 'bg-green-500 hover:bg-green-600' : 'border-green-500 text-green-500 hover:bg-green-500 hover:text-white'} h-12 text-lg`}
+                    >
+                      Roll Under {target}
+                    </Button>
+                    <Button
+                      variant={direction === 'over' ? "default" : "outline"}
+                      onClick={() => setDirection('over')}
+                      className={`${direction === 'over' ? 'bg-red-500 hover:bg-red-600' : 'border-red-500 text-red-500 hover:bg-red-500 hover:text-white'} h-12 text-lg`}
+                    >
+                      Roll Over {target}
+                    </Button>
+                  </div>
+                </div>
 
-                                         {/* Stake-style Three Parameter Display */}
-                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
-                       <div className="bg-[#1a2c38] rounded-lg p-3">
-                         <div className="text-center">
-                           <div className="text-xs text-gray-400 mb-1">Multiplier</div>
-                                                      <div className="text-xl font-bold text-[#00d4ff]">
-                              {multiplier < 2 ? multiplier.toFixed(4) : 
-                               multiplier < 10 ? multiplier.toFixed(3) : 
-                               multiplier < 100 ? multiplier.toFixed(2) : 
-                               multiplier.toFixed(1)}x
-                            </div>
-                         </div>
-                       </div>
-                       <div className="bg-[#1a2c38] rounded-lg p-3">
-                         <div className="text-center">
-                           <div className="text-xs text-gray-400 mb-1">Roll {direction === 'under' ? 'Under' : 'Over'}</div>
-                           <div className="text-xl font-bold text-white">{target}</div>
-                         </div>
-                       </div>
-                                              <div className="bg-[#1a2c38] rounded-lg p-3">
-                          <div className="text-center">
-                            <div className="text-xs text-gray-400 mb-1">Win Chance</div>
-                                                        <div className="text-xl font-bold text-green-400">{(direction === 'under' ? target : (100 - target)).toFixed(2)}%</div>
-                          </div>
-                        </div>
-                     </div>
-
-                                      {/* Roll Button */}
-                   <Button
-                     onClick={placeBet}
-                     disabled={isRolling || betAmount <= 0}
-                     className="w-full bg-[#00d4ff] text-black hover:bg-[#00d4ff]/90 text-lg font-semibold py-3"
-                   >
-                     {isRolling ? (
-                       <div className="flex items-center">
-                         <RotateCcw className="h-5 w-5 mr-2 animate-spin" />
-                         Rolling...
-                       </div>
-                     ) : (
-                       <div className="flex items-center">
-                         <Dice1 className="h-5 w-5 mr-2" />
-                         Roll Dice ({formatCurrency(betAmount)} {selectedCurrency})
-                       </div>
-                     )}
-                   </Button>
-
-                                       {/* Ticker Display */}
-                    {(isTicking || showResult) && (
-                      <div className="mt-6 p-6 bg-gradient-to-r from-[#1a2c38] to-[#2d3748] rounded-lg border-2 border-[#00d4ff]/20 shadow-lg">
-                        <div className="text-center">
-                          <div className="text-sm text-gray-400 mb-3">
-                            {isTicking ? '🎲 Rolling...' : '🎯 Result'}
-                          </div>
-                          <div className="text-6xl font-bold mb-4">
-                            {isTicking ? (
-                              <div className="flex justify-center">
-                                {tickerValues.map((value, index) => (
-                                  <motion.div
-                                    key={index}
-                                    initial={{ opacity: 0, y: 20, scale: 0.8 }}
-                                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                                    transition={{ duration: 0.2 }}
-                                    className="text-6xl bg-gradient-to-b from-[#00d4ff] to-[#0099cc] px-8 py-4 rounded-xl border-2 border-[#00d4ff]/50 shadow-neon ticker-bounce ticker-glow"
-                                    style={{
-                                      background: 'linear-gradient(135deg, #00d4ff 0%, #0099cc 100%)',
-                                      textShadow: '0 0 20px #00d4ff'
-                                    }}
-                                  >
-                                    {value}
-                                  </motion.div>
-                                ))}
-                              </div>
-                            ) : (
-                              <motion.div
-                                initial={{ opacity: 0, scale: 0.5, rotateY: -90 }}
-                                animate={{ opacity: 1, scale: 1, rotateY: 0 }}
-                                transition={{ duration: 0.5, type: "spring", stiffness: 100 }}
-                                className={`text-8xl px-10 py-6 rounded-2xl border-4 ${
-                                  won ? 'bg-gradient-to-b from-green-500 to-green-600 text-white border-green-400 shadow-green-500/30' : 'bg-gradient-to-b from-red-500 to-red-600 text-white border-red-400 shadow-red-500/30'
-                                } shadow-neon`}
-                                style={{
-                                  background: won ? 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)' : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-                                  textShadow: won ? '0 0 30px #22c55e' : '0 0 30px #ef4444'
-                                }}
-                              >
-                                {finalResult}
-                              </motion.div>
-                            )}
-                          </div>
-                          {showResult && (
-                            <motion.div
-                              initial={{ opacity: 0, y: 20 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ delay: 0.3 }}
-                              className={`text-3xl font-bold px-8 py-3 rounded-xl ${
-                                won ? 'bg-green-500/20 text-green-400 border-2 border-green-500/50' : 'bg-red-500/20 text-red-400 border-2 border-red-500/50'
-                              }`}
-                            >
-                              {won ? '🎉 WIN! 🎉' : '❌ LOSS ❌'}
-                            </motion.div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                 </CardContent>
-                               </Card>
-
-                {/* Game Stats Card */}
-                <Card variant="glass" className="border-[#2d3748]">
-                  <CardContent className="p-3">
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="text-center">
-                        <div className="text-xs text-gray-400 mb-1">Total Rolls</div>
-                        <div className="text-base font-bold text-white">{rollHistory.length}</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-xs text-gray-400 mb-1">Win Rate</div>
-                        <div className="text-base font-bold text-green-400">
-                          {rollHistory.length > 0 
-                            ? ((rollHistory.filter(r => r.won).length / rollHistory.length) * 100).toFixed(1)
-                            : '0'
-                          }%
-                        </div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-xs text-gray-400 mb-1">Best Win</div>
-                        <div className="text-base font-bold text-[#00d4ff]">
-                          {rollHistory.length > 0 
-                            ? Math.max(...rollHistory.filter(r => r.won).map(r => r.payout))
-                            : '0'
-                          }
-                        </div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-xs text-gray-400 mb-1">Total Won</div>
-                        <div className="text-base font-bold text-green-400">
-                          {rollHistory.filter(r => r.won).reduce((sum, r) => sum + r.payout, 0).toFixed(2)}
-                        </div>
-                      </div>
+                {/* Game Stats */}
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="bg-[#1a2c38] rounded-lg p-4 text-center">
+                    <div className="text-sm text-gray-400 mb-2">Multiplier</div>
+                    <div className="text-xl font-bold text-white">
+                      {multiplier < 2 ? multiplier.toFixed(4) :
+                       multiplier < 10 ? multiplier.toFixed(3) :
+                       multiplier < 100 ? multiplier.toFixed(2) :
+                       multiplier.toFixed(1)}x
                     </div>
-                  </CardContent>
-                </Card>
-             </div>
+                  </div>
+                  <div className="bg-[#1a2c38] rounded-lg p-4 text-center">
+                    <div className="text-sm text-gray-400 mb-2">Roll {direction === 'under' ? 'Under' : 'Over'}</div>
+                    <div className="text-xl font-bold text-white">{target}</div>
+                  </div>
+                  <div className="bg-[#1a2c38] rounded-lg p-4 text-center">
+                    <div className="text-sm text-gray-400 mb-2">Win Chance</div>
+                    <div className="text-xl font-bold text-green-400">
+                      {(direction === 'under' ? target : (100 - target)).toFixed(1)}%
+                    </div>
+                  </div>
+                </div>
 
-            {/* Sidebar */}
-            <div className="space-y-4">
-                             {/* Bet Amount */}
-               <Card variant="glass" className="border-[#2d3748]">
-                 <CardHeader>
-                   <CardTitle className="text-white text-lg">Bet Amount</CardTitle>
-                 </CardHeader>
-                 <CardContent className="space-y-4">
-                   {/* Currency Selector */}
-                   <div>
-                     <label className="text-sm text-gray-400 mb-2 block">Select Currency</label>
-                     <CurrencySelector
-                       selectedCurrency={selectedCurrency}
-                       onCurrencyChange={setSelectedCurrency}
-                       className="w-full"
-                     />
-                   </div>
-                   
-                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {quickBets.map((amount) => (
+                {/* Bet Amount */}
+                <div className="bg-[#1a2c38] rounded-lg p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-lg text-gray-400">Bet Amount</span>
+                    <span className="text-lg text-gray-400">{selectedCurrency}0.00</span>
+                  </div>
+
+                  <div className="flex items-center space-x-3 mb-6">
+                    <Input
+                      type="number"
+                      value={betAmount}
+                      onChange={(e) => setBetAmount(parseFloat(e.target.value) || 0)}
+                      min="0.01"
+                      step="0.01"
+                      className="flex-1 bg-[#2d3748] border-[#374151] text-white text-center text-xl font-semibold h-14"
+                      placeholder="0.00"
+                    />
+                    <Button
+                      onClick={() => setBetAmount(prev => prev / 2)}
+                      className="bg-[#2d3748] hover:bg-[#374151] text-white px-4 h-14"
+                    >
+                      ½
+                    </Button>
+                    <Button
+                      onClick={() => setBetAmount(prev => prev * 2)}
+                      className="bg-[#2d3748] hover:bg-[#374151] text-white px-4 h-14"
+                    >
+                      2×
+                    </Button>
+                  </div>
+
+                  {/* Quick Bet Buttons */}
+                  <div className="grid grid-cols-5 gap-3 mb-4">
+                    {[0.01, 0.10, 1.00, 10.00, 100.00].map((amount) => (
                       <Button
                         key={amount}
-                        variant={betAmount === amount ? "default" : "outline"}
+                        variant="outline"
                         size="sm"
                         onClick={() => setBetAmount(amount)}
-                        className={`text-xs ${betAmount === amount ? "bg-[#00d4ff] text-black" : ""}`}
-                                             >
-                         {formatCurrency(amount)} {selectedCurrency}
-                       </Button>
+                        className={`text-sm h-10 ${betAmount === amount ? "bg-[#00d4ff] text-black border-[#00d4ff]" : "border-[#374151] text-gray-300"}`}
+                      >
+                        {amount >= 1 ? amount.toFixed(0) : amount.toFixed(2)}
+                      </Button>
                     ))}
                   </div>
+
+                  {/* Profit on Win */}
+                  <div className="flex items-center justify-between text-lg">
+                    <span className="text-gray-400">Profit on Win</span>
+                    <span className="text-green-400 font-semibold">
+                      {formatCurrency(potentialWin - betAmount)} {selectedCurrency}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Game Mode Toggle */}
+                <div className="grid grid-cols-2 gap-3">
+                  <Button
+                    variant={gameMode === 'manual' ? "default" : "outline"}
+                    onClick={() => setGameMode('manual')}
+                    className={`${gameMode === 'manual' ? 'bg-[#00d4ff] text-black' : 'border-[#374151] text-gray-300'} h-12 text-lg`}
+                  >
+                    Manual
+                  </Button>
+                  <Button
+                    variant={gameMode === 'auto' ? "default" : "outline"}
+                    onClick={() => {
+                      setGameMode('auto')
+                      setShowAutoModal(true)
+                    }}
+                    className={`${gameMode === 'auto' ? 'bg-[#00d4ff] text-black' : 'border-[#374151] text-gray-300'} h-12 text-lg`}
+                  >
+                    Auto
+                  </Button>
+                </div>
+
+                {/* Auto Progress Display - Mobile Only */}
+                {gameMode === 'auto' && autoProgress.isRunning && !isDesktop && (
+                  <div className="bg-[#2d3748] rounded-lg p-3 mt-4">
+                    <div className="text-center mb-2">
+                      <div className="text-[#00d4ff] font-semibold">Auto Bet Progress</div>
+                      <div className="text-sm text-gray-400">
+                        Bet {autoProgress.currentBet} / {autoSettings.betCount}
+                      </div>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-green-400">Profit: +{formatCurrency(autoProgress.totalProfit)}</span>
+                      <span className="text-red-400">Loss: -{formatCurrency(autoProgress.totalLoss)}</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Roll Button */}
+                <Button
+                                  onClick={autoProgress.isRunning ? () => {
+                                    setAutoProgress(prev => ({ ...prev, isRunning: false }))
+                                    isRunningRef.current = false
+                                  } : placeBet}
+                disabled={(!autoProgress.isRunning && (isRolling || betAmount <= 0)) || (autoProgress.isRunning && !autoSettings.enabled)}
+                  className="w-full bg-green-500 hover:bg-green-600 text-white text-lg sm:text-xl font-semibold py-4 sm:py-6 rounded-lg min-h-[60px] flex items-center justify-center"
+                >
+                  {autoProgress.isRunning ? (
+                    <div className="flex items-center">
+                      <Pause className="h-6 w-6 mr-3" />
+                      Stop Auto ({autoProgress.currentBet}/{autoSettings.betCount})
+                    </div>
+                  ) : isRolling ? (
+                    <div className="flex items-center">
+                      <RotateCcw className="h-6 w-6 mr-3 animate-spin" />
+                      Rolling...
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center">
+                      <span className="text-center leading-tight">{gameMode === 'auto' ? getAutoButtonText() : 'Bet'}</span>
+                    </div>
+                  )}
+                </Button>
+              </div>
+
+              {/* Right Panel - Results and History */}
+              <div className="col-span-7 space-y-6">
+                {/* Recent Rolls */}
+                <div className="bg-[#1a2c38] rounded-lg p-6">
+                  <h3 className="text-lg font-semibold text-white mb-4">Recent Rolls</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {rollHistory.slice(0, 20).map((roll, index) => (
+                      <span
+                        key={index}
+                        className={`inline-block w-10 h-10 rounded-full text-sm font-bold flex items-center justify-center ${
+                          roll.won ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+                        }`}
+                      >
+                        {roll.result}
+                      </span>
+                    ))}
+                    {rollHistory.length === 0 && (
+                      <span className="text-gray-500 text-sm">No recent rolls</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Result Display */}
+                {(isTicking || showResult) && (
+                  <div className="bg-[#1a2c38] rounded-lg p-8 text-center">
+                    <div className="text-lg text-gray-400 mb-4">
+                      {isTicking ? 'Rolling...' : 'Result'}
+                    </div>
+                    <div className="text-6xl font-bold mb-4">
+                      {isTicking ? (
+                        <div className="flex justify-center">
+                          {tickerValues.map((value, index) => (
+                            <motion.div
+                              key={index}
+                              initial={{ opacity: 0, y: 20, scale: 0.8 }}
+                              animate={{ opacity: 1, y: 0, scale: 1 }}
+                              transition={{ duration: 0.2 }}
+                              className="text-6xl bg-gradient-to-b from-[#00d4ff] to-[#0099cc] px-6 py-3 rounded-xl border-2 border-[#00d4ff]/50"
+                            >
+                              {value}
+                            </motion.div>
+                          ))}
+                        </div>
+                      ) : (
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.5 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ duration: 0.5, type: "spring", stiffness: 100 }}
+                          className={`text-7xl px-8 py-6 rounded-2xl border-4 ${
+                            won ? 'bg-gradient-to-b from-green-500 to-green-600 text-white border-green-400' : 'bg-gradient-to-b from-red-500 to-red-600 text-white border-red-400'
+                          }`}
+                        >
+                          {finalResult}
+                        </motion.div>
+                      )}
+                    </div>
+                    {showResult && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.3 }}
+                        className={`text-2xl font-bold px-8 py-3 rounded-xl ${
+                          won ? 'bg-green-500/20 text-green-400 border-2 border-green-500/50' : 'bg-red-500/20 text-red-400 border-2 border-red-500/50'
+                        }`}
+                      >
+                        {won ? '🎉 WIN! 🎉' : '❌ LOSS ❌'}
+                        {won && (
+                          <div className="text-lg mt-2">
+                            +{formatCurrency(potentialWin - betAmount)} {selectedCurrency}
+                          </div>
+                        )}
+                      </motion.div>
+                    )}
+                  </div>
+                )}
+
+                {/* Roll History Table */}
+                {rollHistory.length > 0 && (
+                  <div className="bg-[#1a2c38] rounded-lg p-6">
+                    <h3 className="text-lg font-semibold text-white mb-4">Roll History</h3>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="text-gray-400 border-b border-[#374151]">
+                            <th className="text-left py-2">Result</th>
+                            <th className="text-left py-2">Target</th>
+                            <th className="text-left py-2">Bet</th>
+                            <th className="text-left py-2">Payout</th>
+                            <th className="text-left py-2">Time</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {rollHistory.slice(0, 10).map((roll, index) => (
+                            <tr key={index} className="border-b border-[#374151]/50">
+                              <td className={`py-2 font-bold ${roll.won ? 'text-green-400' : 'text-red-400'}`}>
+                                {roll.result}
+                              </td>
+                              <td className="py-2 text-gray-300">
+                                {roll.direction} {roll.target}
+                              </td>
+                              <td className="py-2 text-gray-300">
+                                {formatCurrency(roll.betAmount)} {selectedCurrency}
+                              </td>
+                              <td className="py-2 text-gray-300">
+                                {roll.won ? formatCurrency(roll.payout) : '0.00'} {selectedCurrency}
+                              </td>
+                              <td className="py-2 text-gray-400 text-xs">
+                                {roll.timestamp.toLocaleTimeString()}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {/* Fairness Button */}
+                <Button
+                  variant="outline"
+                  onClick={() => setShowFairnessModal(true)}
+                  className="w-full border-[#374151] text-gray-300 hover:bg-[#374151] h-12 text-lg"
+                >
+                  <Shield className="h-5 w-5 mr-2" />
+                  Fairness
+                </Button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* Mobile Layout */
+          <div className="max-w-md mx-auto min-h-screen">
+            {/* Header */}
+            <div className="text-center py-2 px-4 sticky top-0 bg-[#0f1419] z-10">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center justify-center space-x-3 mb-1"
+              >
+                <Dice1 className="h-5 w-5 text-[#00d4ff]" />
+                <h1 className="text-xl font-bold text-white">Dice</h1>
+              </motion.div>
+            </div>
+
+            {/* Main Game Container */}
+            <div className="px-4 space-y-2 pb-16">
+              {/* Recent Rolls */}
+              <div className="flex justify-center space-x-1 mb-2">
+                {rollHistory.slice(0, 10).map((roll, index) => (
+                  <span
+                    key={index}
+                    className={`inline-block w-8 h-8 rounded-full text-xs font-bold flex items-center justify-center ${
+                      roll.won ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+                    }`}
+                  >
+                    {roll.result}
+                  </span>
+                ))}
+                {rollHistory.length === 0 && (
+                  <span className="text-gray-500 text-sm">No recent rolls</span>
+                )}
+              </div>
+
+              {/* Target Slider - Stake Style */}
+              <div className="bg-[#1a2c38] rounded-lg p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs text-gray-400">Target</span>
+                  <span className="text-base font-bold text-white">{target}</span>
+                </div>
+
+                {/* Visual Slider */}
+                <div className="relative mb-3">
+                  <div className="h-10 bg-gray-600 rounded-lg relative overflow-hidden transition-all duration-300 hover:bg-gray-500">
+                    {/* Win region */}
+                    <div
+                      className={`absolute top-0 h-full transition-all duration-500 ease-out transform hover:scale-105 ${
+                        direction === 'under' ? 'left-0 bg-gradient-to-r from-green-400 to-green-600 shadow-lg shadow-green-500/30' : 'right-0 bg-gradient-to-l from-green-400 to-green-600 shadow-lg shadow-green-500/30'
+                      }`}
+                      style={{
+                        width: `${target}%`,
+                        ...(direction === 'over' && { left: `${100 - target}%` })
+                      }}
+                    />
+                    {/* Loss region */}
+                    <div
+                      className={`absolute top-0 h-full transition-all duration-500 ease-out transform hover:scale-105 ${
+                        direction === 'under' ? 'right-0 bg-gradient-to-l from-red-400 to-red-600 shadow-lg shadow-red-500/30' : 'left-0 bg-gradient-to-r from-red-400 to-red-600 shadow-lg shadow-red-500/30'
+                      }`}
+                      style={{
+                        width: `${100 - target}%`,
+                        ...(direction === 'over' && { left: '0%' })
+                      }}
+                    />
+
+                    {/* Slider handle */}
+                    <div
+                      className="absolute top-1/2 w-6 h-6 bg-white rounded-full shadow-xl transform -translate-y-1/2 border-2 border-gray-300 transition-all duration-300 ease-out hover:scale-110 hover:shadow-2xl cursor-pointer"
+                      style={{ left: `${target}%`, marginLeft: '-12px' }}
+                    >
+                      <div className="absolute inset-0 rounded-full bg-gradient-to-br from-white to-gray-200 animate-pulse opacity-50"></div>
+                    </div>
+
+                    {/* Current result marker */}
+                    {currentResult !== null && !isTicking && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0, rotate: -180 }}
+                        animate={{
+                          opacity: 1,
+                          scale: [0, 1.2, 1],
+                          rotate: 0
+                        }}
+                        transition={{
+                          duration: 0.6,
+                          ease: "easeOut",
+                          scale: { times: [0, 0.6, 1] }
+                        }}
+                        className={`absolute top-1/2 w-4 h-4 rounded-full shadow-xl transform -translate-y-1/2 border-2 border-white ${
+                          won ? 'bg-green-400 shadow-green-400/50' : 'bg-red-400 shadow-red-400/50'
+                        }`}
+                        style={{ left: `${currentResult}%`, marginLeft: '-8px' }}
+                      >
+                        <div className={`absolute inset-0 rounded-full animate-ping ${
+                          won ? 'bg-green-300' : 'bg-red-300'
+                        } opacity-30`}></div>
+                      </motion.div>
+                    )}
+                  </div>
+
+                  {/* Slider input */}
+                  <input
+                    type="range"
+                    min={direction === 'over' ? 2 : 1}
+                    max="98"
+                    step="1"
+                    value={target}
+                    onChange={(e) => setTarget(parseInt(e.target.value))}
+                    className="w-full h-10 bg-transparent absolute top-0 left-0 opacity-0 cursor-pointer"
+                  />
+
+                  {/* Scale markers */}
+                  <div className="flex justify-between text-xs text-gray-400 mt-2">
+                    <span>0</span>
+                    <span>25</span>
+                    <span>50</span>
+                    <span>75</span>
+                    <span>100</span>
+                  </div>
+                </div>
+
+                {/* Direction Toggle */}
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    variant={direction === 'under' ? "default" : "outline"}
+                    onClick={() => setDirection('under')}
+                    className={`h-8 text-xs ${direction === 'under' ? 'bg-green-500 hover:bg-green-600' : 'border-green-500 text-green-500 hover:bg-green-500 hover:text-white'}`}
+                  >
+                    Under {target}
+                  </Button>
+                  <Button
+                    variant={direction === 'over' ? "default" : "outline"}
+                    onClick={() => setDirection('over')}
+                    className={`h-8 text-xs ${direction === 'over' ? 'bg-red-500 hover:bg-red-600' : 'border-red-500 text-red-500 hover:bg-red-500 hover:text-white'}`}
+                  >
+                    Over {target}
+                  </Button>
+                </div>
+                              </div>
+
+              {/* Live Ticker Animation - Moved up for mobile visibility */}
+              {(isTicking || showResult) && (
+                <div className="bg-[#1a2c38] rounded-lg p-2 mb-2 border border-[#00d4ff]/30 relative overflow-hidden" style={{ height: '120px' }}>
+                  <div className="absolute inset-0 flex flex-col justify-start -mt-2">
+                    <div className="text-xs text-gray-500 mb-2 text-center">
+                      {isTicking ? 'Rolling...' : ''}
+                    </div>
+                    <div className="flex flex-col space-y-9 flex-1">
+                      <div className="text-xl font-bold h-8">
+                        {isTicking ? (
+                          <div className="flex justify-center items-center min-h-[60px] relative">
+                            <motion.div
+                              className="flex justify-center items-center space-x-1"
+                              initial={{ scale: 0.8, opacity: 0 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              transition={{ duration: 0.3 }}
+                            >
+                              {tickerValues.map((value, index) => (
+                                <motion.div
+                                  key={index}
+                                  initial={{
+                                    opacity: 0,
+                                    scale: 0.3,
+                                    rotateY: -90,
+                                    y: 20
+                                  }}
+                                  animate={{
+                                    opacity: 1,
+                                    scale: 1,
+                                    rotateY: 0,
+                                    y: 0
+                                  }}
+                                  transition={{
+                                    duration: 0.4,
+                                    delay: index * 0.08,
+                                    type: "spring",
+                                    stiffness: 200,
+                                    damping: 15
+                                  }}
+                                  whileHover={{
+                                    scale: 1.1,
+                                    rotateY: 10,
+                                    transition: { duration: 0.2 }
+                                  }}
+                                  className="text-lg bg-gradient-to-br from-[#00d4ff] via-[#0099cc] to-[#0077aa] px-3 py-2 rounded-lg border-2 border-[#00d4ff]/80 font-bold shadow-lg shadow-[#00d4ff]/30 relative overflow-hidden"
+                                >
+                                  <motion.div
+                                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                                    initial={{ x: '-100%' }}
+                                    animate={{ x: '100%' }}
+                                    transition={{
+                                      duration: 1.5,
+                                      repeat: Infinity,
+                                      delay: index * 0.2,
+                                      ease: "easeInOut"
+                                    }}
+                                  />
+                                  <span className="relative z-10 text-white drop-shadow-lg">
+                                    {value}
+                                  </span>
+                                </motion.div>
+                              ))}
+                            </motion.div>
+                            {/* Spinning ring effect */}
+                            <motion.div
+                              className="absolute inset-0 rounded-full border-2 border-[#00d4ff]/30"
+                              animate={{ rotate: 360 }}
+                              transition={{
+                                duration: 2,
+                                repeat: Infinity,
+                                ease: "linear"
+                              }}
+                              style={{
+                                width: '80px',
+                                height: '80px',
+                                margin: 'auto'
+                              }}
+                            />
+                            <motion.div
+                              className="absolute inset-0 rounded-full border border-[#00d4ff]/60"
+                              animate={{ rotate: -360 }}
+                              transition={{
+                                duration: 1.5,
+                                repeat: Infinity,
+                                ease: "linear"
+                              }}
+                              style={{
+                                width: '60px',
+                                height: '60px',
+                                margin: 'auto'
+                              }}
+                            />
+                          </div>
+                        ) : (
+                          <motion.div
+                            initial={{ opacity: 0, scale: 0.5 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ duration: 0.4, type: "spring", stiffness: 120 }}
+                            className={`text-3xl py-3 rounded-lg border-2 font-bold w-full text-center ${
+                              won ? 'bg-gradient-to-r from-green-500 to-green-600 text-white border-green-400 shadow-lg shadow-green-500/30' : 'bg-gradient-to-r from-red-500 to-red-600 text-white border-red-400 shadow-lg shadow-red-500/30'
+                            }`}
+                          >
+                            {finalResult}
+                          </motion.div>
+                        )}
+                      </div>
+                      <motion.div
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: showResult ? 1 : 0, y: showResult ? 0 : 8 }}
+                        transition={{ delay: 0.15 }}
+                        className={`text-lg font-bold py-0 rounded-lg border-2 w-full text-center min-h-[32px] flex flex-col justify-center ${
+                          won ? 'bg-green-500/20 text-green-400 border-green-500/60 shadow-md' : 'bg-red-500/20 text-red-400 border-red-500/60 shadow-md'
+                        }`}
+                      >
+                        <div className={`text-center ${won ? '' : 'mt-2.5'}`}>
+                          {won ? 'WIN!' : 'LOSS'}
+                        </div>
+                        <div className={`text-xs mt-0.5 text-center ${won ? '' : 'invisible'}`}>
+                          {won ? `+${formatCurrency(potentialWin - betAmount)} ${selectedCurrency}` : '+$0.00 USD'}
+                        </div>
+                      </motion.div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Game Stats - Stake Style */}
+              <div className="grid grid-cols-3 gap-2">
+                <div className="bg-[#1a2c38] rounded-lg p-2 text-center">
+                  <div className="text-xs text-gray-400 mb-0.5">Multiplier</div>
+                  <div className="text-sm font-bold text-white">
+                    {multiplier < 2 ? multiplier.toFixed(4) :
+                     multiplier < 10 ? multiplier.toFixed(3) :
+                     multiplier < 100 ? multiplier.toFixed(2) :
+                     multiplier.toFixed(1)}x
+                  </div>
+                </div>
+                <div className="bg-[#1a2c38] rounded-lg p-2 text-center">
+                  <div className="text-xs text-gray-400 mb-0.5">Roll {direction === 'under' ? 'Under' : 'Over'}</div>
+                  <div className="text-sm font-bold text-white">{target}</div>
+                </div>
+                <div className="bg-[#1a2c38] rounded-lg p-2 text-center">
+                  <div className="text-xs text-gray-400 mb-0.5">Win Chance</div>
+                  <div className="text-sm font-bold text-green-400">
+                    {(direction === 'under' ? target : (100 - target)).toFixed(1)}%
+                  </div>
+                </div>
+              </div>
+
+              {/* Bet Amount - Stake Style */}
+              <div className="bg-[#1a2c38] rounded-lg p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs text-gray-400">Bet Amount</span>
+                  <span className="text-xs text-gray-400">{selectedCurrency}0.00</span>
+                </div>
+
+                <div className="flex items-center space-x-2 mb-4">
                   <Input
                     type="number"
                     value={betAmount}
                     onChange={(e) => setBetAmount(parseFloat(e.target.value) || 0)}
                     min="0.01"
                     step="0.01"
-                    className="bg-[#1a2c38] border-[#2d3748] text-white"
-                    placeholder="Enter bet amount"
+                    className="flex-1 bg-[#2d3748] border-[#374151] text-white text-center text-lg font-semibold h-12"
+                    placeholder="0.00"
                   />
-                </CardContent>
-              </Card>
+                  <Button
+                    onClick={() => setBetAmount(prev => prev / 2)}
+                    className="bg-[#2d3748] hover:bg-[#374151] text-white px-4 h-12"
+                  >
+                    ½
+                  </Button>
+                  <Button
+                    onClick={() => setBetAmount(prev => prev * 2)}
+                    className="bg-[#2d3748] hover:bg-[#374151] text-white px-4 h-12"
+                  >
+                    2×
+                  </Button>
+                </div>
 
-                            {/* Auto Settings */}
-              {gameMode === 'auto' && (
-                <Card variant="glass" className="border-[#2d3748]">
-                  <CardHeader>
-                    <CardTitle className="text-white text-lg flex items-center">
-                      <Repeat className="h-5 w-5 mr-2" />
-                      Auto Settings
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <label className="text-sm text-gray-400">Number of Bets</label>
-                      <Input
-                        type="number"
-                        value={autoSettings.betCount}
-                        onChange={(e) => setAutoSettings(prev => ({ ...prev, betCount: parseInt(e.target.value) || 0 }))}
-                        className="bg-[#1a2c38] border-[#2d3748] text-white mt-1"
-                      />
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        checked={autoSettings.stopOnWin}
-                        onChange={(e) => setAutoSettings(prev => ({ ...prev, stopOnWin: e.target.checked }))}
-                        className="rounded"
-                      />
-                      <label className="text-sm text-gray-400">Stop on Win</label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        checked={autoSettings.stopOnLoss}
-                        onChange={(e) => setAutoSettings(prev => ({ ...prev, stopOnLoss: e.target.checked }))}
-                        className="rounded"
-                      />
-                      <label className="text-sm text-gray-400">Stop on Loss</label>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Turbo Speed Settings */}
-              {gameMode === 'turbo' && (
-                <Card variant="glass" className="border-[#2d3748]">
-                  <CardHeader>
-                    <CardTitle className="text-white text-lg flex items-center">
-                      <Zap className="h-5 w-5 mr-2" />
-                      Turbo Speed
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                                                                                                                              <div className="grid grid-cols-3 gap-2">
-                         <Button
-                           variant={turboSpeed === 'fast' ? "default" : "outline"}
-                           size="sm"
-                           onClick={() => setTurboSpeed('fast')}
-                           className={`text-xs ${turboSpeed === 'fast' ? 'bg-[#00d4ff] text-black' : ''}`}
-                         >
-                           Fast
-                         </Button>
-                         <Button
-                           variant={turboSpeed === 'ultra' ? "default" : "outline"}
-                           size="sm"
-                           onClick={() => setTurboSpeed('ultra')}
-                           className={`text-xs ${turboSpeed === 'ultra' ? 'bg-[#00d4ff] text-black' : ''}`}
-                         >
-                           Ultra
-                         </Button>
-                         <Button
-                           variant={turboSpeed === 'instant' ? "default" : "outline"}
-                           size="sm"
-                           onClick={() => setTurboSpeed('instant')}
-                           className={`text-xs ${turboSpeed === 'instant' ? 'bg-[#00d4ff] text-black' : ''}`}
-                         >
-                           Instant
-                         </Button>
-                       </div>
-                                           <div className="text-xs text-gray-400 text-center">
-                        {/* Animation speed info removed */}
-                      </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Hotkeys Settings */}
-              <Card variant="glass" className="border-[#2d3748]">
-                <CardHeader>
-                  <CardTitle className="text-white text-lg flex items-center justify-between">
-                    <div className="flex items-center">
-                      <Keyboard className="h-5 w-5 mr-2" />
-                      Hotkeys
-                    </div>
+                {/* Quick Bet Buttons */}
+                <div className="grid grid-cols-5 gap-2 mb-4">
+                  {[0.01, 0.10, 1.00, 10.00, 100.00].map((amount) => (
                     <Button
+                      key={amount}
                       variant="outline"
                       size="sm"
-                      onClick={() => setShowHotkeysModal(true)}
-                      className="text-[#00d4ff] border-[#00d4ff] hover:bg-[#00d4ff] hover:text-black"
+                      onClick={() => setBetAmount(amount)}
+                      className={`text-xs h-8 ${betAmount === amount ? "bg-[#00d4ff] text-black border-[#00d4ff]" : "border-[#374151] text-gray-300"}`}
                     >
-                      Help
+                      {amount >= 1 ? amount.toFixed(0) : amount.toFixed(2)}
                     </Button>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      checked={hotkeysEnabled}
-                      onChange={(e) => setHotkeysEnabled(e.target.checked)}
-                      className="rounded"
-                    />
-                    <label className="text-sm text-gray-400">Enable Hotkeys</label>
-                  </div>
-                  <div className="text-xs text-gray-400 space-y-1">
-                    <div>Space - Roll Dice</div>
-                    <div>Ctrl+R - Rotate Seeds</div>
-                    <div>Ctrl+T - Toggle Turbo</div>
-                    <div>Ctrl+H - Show Hotkeys</div>
-                  </div>
-                </CardContent>
-              </Card>
+                  ))}
+                </div>
 
-              {/* Seeds Management */}
-              <Card variant="glass" className="border-[#2d3748]">
-                <CardHeader>
-                  <CardTitle className="text-white flex items-center justify-between">
+                {/* Profit on Win */}
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-400">Profit on Win</span>
+                  <span className="text-green-400 font-semibold">
+                    {formatCurrency(potentialWin - betAmount)} {selectedCurrency}
+                  </span>
+                </div>
+              </div>
+
+              {/* Game Mode Toggle */}
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  variant={gameMode === 'manual' ? "default" : "outline"}
+                  onClick={() => setGameMode('manual')}
+                  className={`${gameMode === 'manual' ? 'bg-[#00d4ff] text-black' : 'border-[#374151] text-gray-300'}`}
+                >
+                  Manual
+                </Button>
+                <Button
+                  variant={gameMode === 'auto' ? "default" : "outline"}
+                  onClick={() => {
+                    setGameMode('auto')
+                    setShowAutoModal(true)
+                  }}
+                  className={`${gameMode === 'auto' ? 'bg-[#00d4ff] text-black' : 'border-[#374151] text-gray-300'}`}
+                >
+                  Auto
+                </Button>
+              </div>
+
+              {/* Roll Button */}
+                              <Button
+                  onClick={autoProgress.isRunning ? () => {
+                    setAutoProgress(prev => ({ ...prev, isRunning: false }))
+                    isRunningRef.current = false
+                  } : placeBet}
+                  disabled={(!autoProgress.isRunning && (isRolling || betAmount <= 0)) || (autoProgress.isRunning && !autoSettings.enabled)}
+                  className="w-full bg-green-500 hover:bg-green-600 text-white text-sm sm:text-lg font-semibold py-3 sm:py-4 rounded-lg min-h-[48px] flex items-center justify-center"
+                >
+                  {autoProgress.isRunning ? (
                     <div className="flex items-center">
-                      <Settings className="h-5 w-5 mr-2" />
-                      Seeds
+                      <Pause className="h-5 w-5 mr-2" />
+                      {isDesktop ? 'Stop Auto' : `Stop Auto (${autoProgress.currentBet}/${autoSettings.betCount})`}
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowSeedsModal(true)}
-                      className="text-[#00d4ff] border-[#00d4ff] hover:bg-[#00d4ff] hover:text-black"
-                    >
-                      Change
-                    </Button>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                                     <div>
-                     <label className="text-xs text-gray-400">Client Seed</label>
-                     <div className="flex items-center space-x-2 mt-1">
-                       <Input
-                         value={customClientSeed || session.clientSeed}
-                         readOnly
-                         className="bg-[#1a2c38] border-[#2d3748] text-white text-sm"
-                         placeholder="Enter custom seed"
-                       />
-                       <Button
-                         variant="outline"
-                         size="sm"
-                         onClick={() => copyToClipboard(customClientSeed || session.clientSeed, 'client')}
-                         className="text-[#00d4ff] border-[#00d4ff] hover:bg-[#00d4ff] hover:text-black"
-                       >
-                         {copied === 'client' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                       </Button>
-                     </div>
-                   </div>
-                  <div>
-                    <label className="text-xs text-gray-400">Server Seed (Hashed)</label>
-                    <div className="flex items-center space-x-2 mt-1">
-                      <Input
-                        value={session.hashedServerSeed}
-                        readOnly
-                        className="bg-[#1a2c38] border-[#2d3748] text-white text-sm"
-                      />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => copyToClipboard(session.hashedServerSeed, 'server')}
-                        className="text-[#00d4ff] border-[#00d4ff] hover:bg-[#00d4ff] hover:text-black"
-                      >
-                        {copied === 'server' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                      </Button>
+                  ) : isRolling ? (
+                    <div className="flex items-center">
+                      <RotateCcw className="h-5 w-5 mr-2 animate-spin" />
+                      Rolling...
                     </div>
-                  </div>
-                  <div>
-                    <label className="text-xs text-gray-400">Nonce</label>
-                    <div className="flex items-center space-x-2 mt-1">
-                      <Input
-                        value={session.nonce}
-                        readOnly
-                        className="bg-[#1a2c38] border-[#2d3748] text-white text-sm"
-                      />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={rotateSeeds}
-                        className="text-[#00d4ff] border-[#00d4ff] hover:bg-[#00d4ff] hover:text-black"
-                      >
-                        <RefreshCw className="h-4 w-4" />
-                      </Button>
+                  ) : (
+                    <div className="flex items-center justify-center">
+                      <span className="text-center leading-tight">{gameMode === 'auto' ? getAutoButtonText() : 'Bet'}</span>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  )}
+                </Button>
 
-              {/* Statistics */}
-              <Card variant="glass" className="border-[#2d3748]">
-                <CardHeader>
-                  <CardTitle className="text-white flex items-center">
-                    <BarChart3 className="h-5 w-5 mr-2" />
-                    Game Stats
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">House Edge:</span>
-                    <span className="text-red-400">1.00%</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">RTP:</span>
-                    <span className="text-green-400">99.00%</span>
-                  </div>
-                                     <div className="flex justify-between">
-                     <span className="text-gray-400">Min Bet:</span>
-                     <span className="text-white">0.01 {selectedCurrency}</span>
-                   </div>
-                   <div className="flex justify-between">
-                     <span className="text-gray-400">Max Bet:</span>
-                     <span className="text-white">1000 {selectedCurrency}</span>
-                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Total Rolls:</span>
-                    <span className="text-white">{rollHistory.length}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Win Rate:</span>
-                    <span className="text-green-400">
-                      {rollHistory.length > 0 
-                        ? ((rollHistory.filter(r => r.won).length / rollHistory.length) * 100).toFixed(1)
-                        : '0'
-                      }%
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
 
-                             {/* Fairness Button */}
-               <Button
-                 variant="outline"
-                 onClick={() => setShowFairnessModal(true)}
-                 className="w-full text-[#00d4ff] border-[#00d4ff] hover:bg-[#00d4ff] hover:text-black"
-               >
-                 <Shield className="h-4 w-4 mr-2" />
-                 Fairness
-               </Button>
+              {/* Fairness Button */}
+              <Button
+                variant="outline"
+                onClick={() => setShowFairnessModal(true)}
+                className="w-full border-[#374151] text-gray-300 hover:bg-[#374151]"
+              >
+                <Shield className="h-4 w-4 mr-2" />
+                Fairness
+              </Button>
             </div>
           </div>
-        </div>
+        )}
 
+        {/* Modals - Shared between desktop and mobile */}
         {/* Fairness Modal */}
         {showFairnessModal && (
           <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
@@ -985,8 +1327,76 @@ const EdgeDice: React.FC = () => {
                   ×
                 </Button>
               </div>
-              
+
               <div className="space-y-6">
+                {/* Active Seeds & Nonce Display */}
+                <div className="bg-[#2d3748] rounded-lg p-4">
+                  <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
+                    <Shield className="h-5 w-5 mr-2 text-[#00d4ff]" />
+                    Active Seeds & Nonce
+                  </h3>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div className="bg-[#1a2c38] rounded-lg p-3">
+                      <div className="text-xs text-gray-400 mb-1">Client Seed</div>
+                      <div className="text-sm text-[#00d4ff] font-mono break-all">
+                        {session.clientSeed}
+                      </div>
+                    </div>
+
+                    <div className="bg-[#1a2c38] rounded-lg p-3">
+                      <div className="text-xs text-gray-400 mb-1">Server Seed (Hashed)</div>
+                      <div className="text-sm text-orange-400 font-mono break-all">
+                        {hashedServerSeed || 'Not available'}
+                      </div>
+                    </div>
+
+                    <div className="bg-[#1a2c38] rounded-lg p-3">
+                      <div className="text-xs text-gray-400 mb-1">Nonce</div>
+                      <div className="text-sm text-green-400 font-mono">
+                        {session.nonce}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Seed Rotation Section */}
+                  <div className="border-t border-[#374151] pt-4">
+                    <h4 className="text-md font-semibold text-white mb-3">Rotate Client Seed</h4>
+
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-sm text-gray-400 block mb-2">New Client Seed (Optional)</label>
+                        <div className="flex items-center space-x-2">
+                          <Input
+                            value={customClientSeed}
+                            onChange={(e) => setCustomClientSeed(e.target.value)}
+                            className="bg-[#1a2c38] border-[#374151] text-white flex-1 text-sm"
+                            placeholder="Enter custom seed or leave empty for random"
+                          />
+                          <Button
+                            variant="outline"
+                            onClick={generateRandomSeed}
+                            className="text-[#00d4ff] border-[#00d4ff] hover:bg-[#00d4ff] hover:text-black px-3 py-2"
+                          >
+                            <Shuffle className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Leave empty to generate a random seed
+                        </p>
+                      </div>
+
+                      <Button
+                        onClick={handleChangeSeeds}
+                        className="w-full bg-[#00d4ff] text-black hover:bg-[#00d4ff]/90 font-semibold"
+                      >
+                        <RotateCcw className="h-4 w-4 mr-2" />
+                        Rotate Seeds
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
                 <div>
                   <h3 className="text-lg font-semibold text-white mb-3">Solving the Trust Issue with Online Gambling</h3>
                   <p className="text-gray-300 mb-3">
@@ -1002,7 +1412,7 @@ const EdgeDice: React.FC = () => {
                     </code>
                   </div>
                 </div>
-                
+
                 <div>
                   <h3 className="text-lg font-semibold text-white mb-3">How It Works</h3>
                   <div className="space-y-3">
@@ -1043,13 +1453,13 @@ const EdgeDice: React.FC = () => {
                     All Edge Originals played on Edge can be verified both here and via 3rd party websites who have also open sourced the verification procedure. You can find them via a google search, or simply check out some of these that have been put together by our community:
                   </p>
                   <div className="space-y-2">
-                    <a 
-                      href="https://provablyfair.me" 
-                      target="_blank" 
+                    <a
+                      href="https://provablyfair.me"
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="block text-[#00d4ff] hover:text-[#00d4ff]/80 transition-colors"
                     >
-                      • https://provablyfair.me
+                      â€¢ https://provablyfair.me
                     </a>
                   </div>
                 </div>
@@ -1057,11 +1467,11 @@ const EdgeDice: React.FC = () => {
                 <div>
                   <h3 className="text-lg font-semibold text-white mb-3">Crypto Gambling Foundation</h3>
                   <p className="text-gray-300 mb-3">
-                    Edge is a verified operator on the Crypto Gambling Foundation network. This foundation aims to uphold the highest standard of provably fair gambling and we are proud to be a part of their network. You can find further information and insights about provable fairness and the power it has in this industry, check out the Crypto Gambling Foundation via their website: 
+                    Edge is a verified operator on the Crypto Gambling Foundation network. This foundation aims to uphold the highest standard of provably fair gambling and we are proud to be a part of their network. You can find further information and insights about provable fairness and the power it has in this industry, check out the Crypto Gambling Foundation via their website:
                   </p>
-                  <a 
-                    href="https://cryptogambling.org" 
-                    target="_blank" 
+                  <a
+                    href="https://cryptogambling.org"
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="text-[#00d4ff] hover:text-[#00d4ff]/80 transition-colors"
                   >
@@ -1073,142 +1483,247 @@ const EdgeDice: React.FC = () => {
           </div>
         )}
 
-                 {/* Seeds Modal */}
-         {showSeedsModal && (
-           <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-             <div className="bg-[#1a2c38] rounded-lg p-6 max-w-md w-full mx-4">
-               <div className="flex items-center justify-between mb-6">
-                 <h2 className="text-2xl font-bold text-white">Change Seeds</h2>
-                 <Button
-                   variant="outline"
-                   size="sm"
-                   onClick={() => setShowSeedsModal(false)}
-                   className="text-white border-white hover:bg-white hover:text-black"
-                 >
-                   ×
-                 </Button>
-               </div>
-               
-               <div className="space-y-4">
-                 <div>
-                   <label className="text-sm text-gray-400">New Client Seed *</label>
-                   <div className="flex items-center space-x-2 mt-1">
-                     <Input
-                       value={customClientSeed}
-                       onChange={(e) => setCustomClientSeed(e.target.value)}
-                       className="bg-[#2d3748] border-[#374151] text-white flex-1"
-                       placeholder="Enter new client seed"
-                     />
-                     <Button
-                       variant="outline"
-                       onClick={generateRandomSeed}
-                       className="text-[#00d4ff] border-[#00d4ff] hover:bg-[#00d4ff] hover:text-black"
-                     >
-                       Random
-                     </Button>
-                   </div>
-                   <p className="text-xs text-gray-500 mt-1">
-                     Leave empty to use a random seed
-                   </p>
-                 </div>
-                 
-                 <div className="flex space-x-3">
-                   <Button
-                     onClick={handleChangeSeeds}
-                     className="flex-1 bg-[#00d4ff] text-black hover:bg-[#00d4ff]/90"
-                   >
-                     Change Seeds
-                   </Button>
-                   <Button
-                     variant="outline"
-                     onClick={() => setShowSeedsModal(false)}
-                     className="flex-1"
-                   >
-                     Cancel
-                   </Button>
-                 </div>
-               </div>
-             </div>
-           </div>
-         )}
+        {/* Auto Settings Modal */}
+        {showAutoModal && (
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+            <div className="bg-[#1a2c38] rounded-lg p-4 sm:p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-white flex items-center">
+                  <Settings className="h-6 w-6 mr-2" />
+                  Auto Bet Settings
+                </h2>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowAutoModal(false)}
+                  className="text-white border-white hover:bg-white hover:text-black"
+                >
+                  ×
+                </Button>
+              </div>
 
-         {/* Confirmation Modal */}
-         {showConfirmModal && (
-           <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-             <div className="bg-[#1a2c38] rounded-lg p-6 max-w-md w-full mx-4">
-               <div className="text-center">
-                 <h2 className="text-2xl font-bold text-white mb-4">Confirm Seed Change</h2>
-                 <p className="text-gray-300 mb-6">
-                   Are you sure you want to change your client seed to "{customClientSeed}"? 
-                   This will reset your current session and nonce.
-                 </p>
-                 <div className="flex space-x-3">
-                   <Button
-                     onClick={confirmChangeSeeds}
-                     className="flex-1 bg-[#00d4ff] text-black hover:bg-[#00d4ff]/90"
-                   >
-                     Yes, Change Seeds
-                   </Button>
-                   <Button
-                     variant="outline"
-                     onClick={() => setShowConfirmModal(false)}
-                     className="flex-1"
-                   >
-                     Cancel
-                   </Button>
-                 </div>
-               </div>
-             </div>
-           </div>
-         )}
+              <div className="space-y-4">
+                {/* Number of Bets */}
+                <div>
+                  <label className="text-sm text-gray-400 block mb-2">Number of Bets</label>
+                  <Input
+                    type="number"
+                    value={autoSettings.betCount}
+                    onChange={(e) => setAutoSettings(prev => ({ ...prev, betCount: parseInt(e.target.value) || 10 }))}
+                    min="1"
+                    max="1000"
+                    className="bg-[#2d3748] border-[#374151] text-white"
+                  />
+                </div>
 
-         {/* Hotkeys Modal */}
-         {showHotkeysModal && (
-           <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-             <div className="bg-[#1a2c38] rounded-lg p-6 max-w-md w-full mx-4">
-               <div className="flex items-center justify-between mb-6">
-                 <h2 className="text-2xl font-bold text-white flex items-center">
-                   <Keyboard className="h-6 w-6 mr-2" />
-                   Hotkeys
-                 </h2>
-                 <Button
-                   variant="outline"
-                   size="sm"
-                   onClick={() => setShowHotkeysModal(false)}
-                   className="text-white border-white hover:bg-white hover:text-black"
-                 >
-                   ×
-                 </Button>
-               </div>
-               
-               <div className="space-y-4">
-                 <div className="grid grid-cols-2 gap-4">
-                   <div className="bg-[#2d3748] rounded-lg p-3">
-                     <div className="text-[#00d4ff] font-semibold">Space</div>
-                     <div className="text-gray-300 text-sm">Roll Dice</div>
-                   </div>
-                   <div className="bg-[#2d3748] rounded-lg p-3">
-                     <div className="text-[#00d4ff] font-semibold">Ctrl+R</div>
-                     <div className="text-gray-300 text-sm">Rotate Seeds</div>
-                   </div>
-                   <div className="bg-[#2d3748] rounded-lg p-3">
-                     <div className="text-[#00d4ff] font-semibold">Ctrl+T</div>
-                     <div className="text-gray-300 text-sm">Toggle Turbo</div>
-                   </div>
-                   <div className="bg-[#2d3748] rounded-lg p-3">
-                     <div className="text-[#00d4ff] font-semibold">Ctrl+H</div>
-                     <div className="text-gray-300 text-sm">Show Hotkeys</div>
-                   </div>
-                 </div>
-                 
-                 <div className="text-sm text-gray-400">
-                   <p className="mb-2">Hotkeys are disabled when typing in input fields.</p>
-                   <p>You can toggle hotkeys on/off in the Hotkeys panel.</p>
-                 </div>
-               </div>
-             </div>
-           </div>
-         )}
+                {/* Stop on Profit */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-sm text-gray-400">Stop on Profit</label>
+                    <input
+                      type="checkbox"
+                      checked={autoSettings.stopOnWin}
+                      onChange={(e) => setAutoSettings(prev => ({ ...prev, stopOnWin: e.target.checked }))}
+                      className="w-4 h-4"
+                    />
+                  </div>
+                  {autoSettings.stopOnWin && (
+                    <Input
+                      type="number"
+                      value={autoSettings.winAmount}
+                      onChange={(e) => setAutoSettings(prev => ({ ...prev, winAmount: parseFloat(e.target.value) || 100 }))}
+                      min="0"
+                      step="0.01"
+                      placeholder="Profit amount to stop"
+                      className="bg-[#2d3748] border-[#374151] text-white"
+                    />
+                  )}
+                </div>
+
+                {/* Stop on Loss */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-sm text-gray-400">Stop on Loss</label>
+                    <input
+                      type="checkbox"
+                      checked={autoSettings.stopOnLoss}
+                      onChange={(e) => setAutoSettings(prev => ({ ...prev, stopOnLoss: e.target.checked }))}
+                      className="w-4 h-4"
+                    />
+                  </div>
+                  {autoSettings.stopOnLoss && (
+                    <Input
+                      type="number"
+                      value={autoSettings.lossAmount}
+                      onChange={(e) => setAutoSettings(prev => ({ ...prev, lossAmount: parseFloat(e.target.value) || 50 }))}
+                      min="0"
+                      step="0.01"
+                      placeholder="Loss amount to stop"
+                      className="bg-[#2d3748] border-[#374151] text-white"
+                    />
+                  )}
+                </div>
+
+
+                <div className="flex space-x-3 pt-4">
+                  <Button
+                    onClick={() => {
+                      setShowAutoModal(false)
+                      setAutoSettings(prev => ({ ...prev, enabled: true }))
+                    }}
+                    className="flex-1 bg-[#00d4ff] text-black hover:bg-[#00d4ff]/90"
+                  >
+                    {getAutoButtonText()}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowAutoModal(false)}
+                    className="flex-1 border-[#374151] text-gray-300 hover:bg-[#374151]"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Seeds Modal */}
+        {showSeedsModal && (
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+            <div className="bg-[#1a2c38] rounded-lg p-6 max-w-md w-full mx-4">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-white">Change Seeds</h2>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowSeedsModal(false)}
+                  className="text-white border-white hover:bg-white hover:text-black"
+                >
+                  ×
+                </Button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm text-gray-400">New Client Seed *</label>
+                  <div className="flex items-center space-x-2 mt-1">
+                    <Input
+                      value={customClientSeed}
+                      onChange={(e) => setCustomClientSeed(e.target.value)}
+                      className="bg-[#2d3748] border-[#374151] text-white flex-1"
+                      placeholder="Enter new client seed"
+                    />
+                    <Button
+                      variant="outline"
+                      onClick={generateRandomSeed}
+                      className="text-[#00d4ff] border-[#00d4ff] hover:bg-[#00d4ff] hover:text-black"
+                    >
+                      Random
+                    </Button>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Leave empty to use a random seed
+                  </p>
+                </div>
+
+                <div className="flex space-x-3">
+                  <Button
+                    onClick={handleChangeSeeds}
+                    className="flex-1 bg-[#00d4ff] text-black hover:bg-[#00d4ff]/90"
+                  >
+                    Change Seeds
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowSeedsModal(false)}
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Confirmation Modal */}
+        {showConfirmModal && (
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+            <div className="bg-[#1a2c38] rounded-lg p-6 max-w-md w-full mx-4">
+              <div className="text-center">
+                <h2 className="text-2xl font-bold text-white mb-4">Confirm Seed Change</h2>
+                <p className="text-gray-300 mb-6">
+                  Are you sure you want to change your client seed to "{customClientSeed}"?
+                  This will reset your current session and nonce.
+                </p>
+                <div className="flex space-x-3">
+                  <Button
+                    onClick={confirmChangeSeeds}
+                    className="flex-1 bg-[#00d4ff] text-black hover:bg-[#00d4ff]/90"
+                  >
+                    Yes, Change Seeds
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowConfirmModal(false)}
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Hotkeys Modal */}
+        {showHotkeysModal && (
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+            <div className="bg-[#1a2c38] rounded-lg p-6 max-w-md w-full mx-4">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-white flex items-center">
+                  <Keyboard className="h-6 w-6 mr-2" />
+                  Hotkeys
+                </h2>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowHotkeysModal(false)}
+                  className="text-white border-white hover:bg-white hover:text-black"
+                >
+                  ×
+                </Button>
+              </div>
+
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-[#2d3748] rounded-lg p-3">
+                    <div className="text-[#00d4ff] font-semibold">Space</div>
+                    <div className="text-gray-300 text-sm">Roll Dice</div>
+                  </div>
+                  <div className="bg-[#2d3748] rounded-lg p-3">
+                    <div className="text-[#00d4ff] font-semibold">Ctrl+R</div>
+                    <div className="text-gray-300 text-sm">Rotate Seeds</div>
+                  </div>
+                  <div className="bg-[#2d3748] rounded-lg p-3">
+                    <div className="text-[#00d4ff] font-semibold">Ctrl+T</div>
+                    <div className="text-gray-300 text-sm">Toggle Turbo</div>
+                  </div>
+                  <div className="bg-[#2d3748] rounded-lg p-3">
+                    <div className="text-[#00d4ff] font-semibold">Ctrl+H</div>
+                    <div className="text-gray-300 text-sm">Show Hotkeys</div>
+                  </div>
+                </div>
+
+                <div className="text-sm text-gray-400">
+                  <p className="mb-2">Hotkeys are disabled when typing in input fields.</p>
+                  <p>You can toggle hotkeys on/off in the Hotkeys panel.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </CasinoLayout>
   )
